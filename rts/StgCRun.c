@@ -834,7 +834,12 @@ StgRun(StgFunPtr f, StgRegTable *basereg) {
         "%x19", "%x20", "%x21", "%x22", "%x23", "%x24", "%x25",
         "%x26", "%x27", "%x28", /* Exclude %x29 (frame pointer) */
         "%x30",
-        "%d8", "%d9", "%d10", "%d11", "%d12", "%d13", "%d14"
+        "%d8", "%d9", "%d10", "%d11", "%d12", "%d13", "%d14", "%d15"
+        /* Since all these registers listed as clobbered are being explicitly
+         * saved and restored, they should probably not be listed as
+         * clobbered. Leaving them as is for now while I debug other
+         * issues.
+         */
     );
     return r;
 }
