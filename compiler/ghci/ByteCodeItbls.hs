@@ -232,6 +232,23 @@ mkJumpToAddr dflags a = case platformArch (targetPlatform dflags) of
                 , 0x11, 0xff, 0x2f, 0xe1
                 , byte0 w32, byte1 w32, byte2 w32, byte3 w32]
 
+    ArchARM64 { } ->
+        -- Generates:
+        --
+        --      ldr     x1, label
+        --      br      x1
+        -- label:
+        --      .quad <addr>
+        --
+        -- which looks like:
+        --     0:       58000041        ldr     x1, <label>
+        --     4:       d61f0020        br      x1
+       let w64 = fromIntegral (funPtrToInt a) :: Word64
+       in Right [ 0x58000041
+                , 0xd61f0020
+                , fromIntegral w64
+                , fromIntegral (w64 `shiftR` 32) ]
+
     arch ->
         panic ("mkJumpToAddr not defined for " ++ show arch)
 
