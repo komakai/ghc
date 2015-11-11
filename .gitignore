@@ -31,9 +31,9 @@ Thumbs.db
 
 log
 tags
+*.log
 
 autom4te.cache
-config.log
 config.status
 configure
 missing-win32-tarballs
