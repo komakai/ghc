@@ -2668,12 +2668,8 @@ dynamic_flags = [
         ------ Compiler flags -----------------------------------------------
 
   , defGhcFlag "fasm"             (NoArg (setObjTarget HscAsm))
-  , defGhcFlag "fvia-c"           (NoArg
-         (addWarn $ "The -fvia-c flag does nothing; " ++
-                    "it will be removed in a future GHC release"))
-  , defGhcFlag "fvia-C"           (NoArg
-         (addWarn $ "The -fvia-C flag does nothing; " ++
-                    "it will be removed in a future GHC release"))
+  , defGhcFlag "fvia-c"           (NoArg (setObjTarget HscC))
+  , defGhcFlag "fvia-C"           (NoArg (setObjTarget HscC))
   , defGhcFlag "fllvm"            (NoArg (setObjTarget HscLlvm))
 
   , defFlag "fno-code"         (NoArg (do upd $ \d -> d{ ghcLink=NoLink }
@@ -4128,15 +4124,6 @@ makeDynFlagsConsistent dflags
     = let dflags' = gopt_unset dflags Opt_BuildDynamicToo
           warn    = "-dynamic-too is not supported on Windows"
       in loop dflags' warn
- | hscTarget dflags == HscC &&
-   not (platformUnregisterised (targetPlatform dflags))
-    = if cGhcWithNativeCodeGen == "YES"
-      then let dflags' = dflags { hscTarget = HscAsm }
-               warn = "Compiler not unregisterised, so using native code generator rather than compiling via C"
-           in loop dflags' warn
-      else let dflags' = dflags { hscTarget = HscLlvm }
-               warn = "Compiler not unregisterised, so using LLVM rather than compiling via C"
-           in loop dflags' warn
  | hscTarget dflags == HscAsm &&
    platformUnregisterised (targetPlatform dflags)
     = loop (dflags { hscTarget = HscC })

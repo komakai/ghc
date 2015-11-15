@@ -28,6 +28,8 @@ Thumbs.db
 *.depend*
 *.dyn_o
 *.dyn_hi
+*.hc
+*.dyn_hc
 
 log
 tags

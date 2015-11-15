@@ -2162,7 +2162,7 @@ doCpp dflags raw input_fn output_fn = do
         -- operator, which we tend to abuse. Clang in particular is not very happy
         -- about this.
                     ++ [ SysTools.Option     "-x"
-                       , SysTools.Option     "assembler-with-cpp"
+                       , SysTools.Option     "c"
                        , SysTools.Option     input_fn
         -- We hackily use Option instead of FileOption here, so that the file
         -- name is not back-slashed on Windows.  cpp is capable of

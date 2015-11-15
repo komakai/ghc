@@ -139,6 +139,9 @@ ifeq "$3" "0"
 $1_$2_PROGRAM_WAY = v
 else ifeq "$$(DYNAMIC_GHC_PROGRAMS)" "YES"
 $1_$2_PROGRAM_WAY = dyn
+ifeq "$$(GhcUnregisterised)" "YES"
+$1_$2_HC_OPTS += -fvia-c
+endif
 else
 $1_$2_PROGRAM_WAY = v
 endif

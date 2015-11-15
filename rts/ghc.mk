@@ -207,12 +207,17 @@ else
 # flags will be taken care of in rts/dist/libs.depend
 LIBFFI_LIBS =
 endif
+
+ifeq "$$(GhcUnregisterised)" "YES"
+rts_$1_LINK_OPTS = -fvia-c
+endif
+
 $$(rts_$1_LIB) : $$(rts_$1_OBJS) $$(rts_$1_DTRACE_OBJS) rts/dist/libs.depend $$(rts_dist_FFI_SO)
 	"$$(RM)" $$(RM_OPTS) $$@
 	"$$(rts_dist_HC)" -this-package-key rts -shared -dynamic -dynload deploy \
 	  -no-auto-link-packages $$(LIBFFI_LIBS) `cat rts/dist/libs.depend` $$(rts_$1_OBJS) \
           $$(rts_dist_$1_GHC_LD_OPTS) \
-	  $$(rts_$1_DTRACE_OBJS) -o $$@
+	  $$(rts_$1_DTRACE_OBJS) $$(rts_$1_LINK_OPTS) -o $$@
 endif
 else
 $$(rts_$1_LIB) : $$(rts_$1_OBJS) $$(rts_$1_DTRACE_OBJS)
@@ -284,6 +289,11 @@ rts_CC_OPTS += $(WARNING_OPTS)
 rts_CC_OPTS += $(STANDARD_OPTS)
 
 rts_HC_OPTS += $(STANDARD_OPTS) -this-package-key rts
+
+ifeq "$(GhcUnregisterised)" "YES"
+rts_CC_OPTS += -DNOSMP -DUSE_MINIINTERPRETER
+rts_HC_OPTS += -optc-DNOSMP -optc-DUSE_MINIINTERPRETER
+endif
 
 ifneq "$(GhcWithSMP)" "YES"
 rts_CC_OPTS += -DNOSMP
