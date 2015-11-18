@@ -1884,10 +1884,12 @@ AC_MSG_NOTICE(Building in-tree ghc-pwd)
     changequote([, ])dnl
     if ! "$WithGhc" $GHC_LDFLAGS -v0 -no-user-$GHC_PACKAGE_DB_FLAG -hidir utils/ghc-pwd/dist-boot -odir utils/ghc-pwd/dist-boot -stubdir utils/ghc-pwd/dist-boot --make utils/ghc-pwd/Main.hs -o utils/ghc-pwd/dist-boot/ghc-pwd
     then
-        AC_MSG_ERROR([Building ghc-pwd failed])
+        AC_MSG_WARN([Building ghc-pwd failed])
+        AC_MSG_WARN([Defaulting to pwd])
+        GHC_PWD=pwd
+    else
+        GHC_PWD=utils/ghc-pwd/dist-boot/ghc-pwd
     fi
-
-    GHC_PWD=utils/ghc-pwd/dist-boot/ghc-pwd
 ])
 
 AC_DEFUN([FP_BINDIST_GHC_PWD],[
