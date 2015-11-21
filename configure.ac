@@ -424,17 +424,14 @@ if test "$target" != "$host" ; then
                           #   If you meant to cross compile, use `--host'.
 fi
 if test "$build" != "$host" ; then
-   AC_MSG_ERROR([
+   AC_MSG_NOTICE([
 You've selected:
 
   BUILD:  $build   (the architecture we're building on)
   HOST:   $host    (the architecture the compiler we're building will execute on)
   TARGET: $target  (the architecture the compiler we're building will produce code for)
 
-BUILD must equal HOST; that is, we do not support building GHC itself
-with a cross-compiler.  To cross-compile GHC itself, set TARGET: stage
-1 will be a cross-compiler, and stage 2 will be the cross-compiled
-GHC.
+Cross-compiling!
 ])
 fi
 if test "$CrossCompiling" = "YES"
@@ -464,7 +461,8 @@ FP_CPP_CMD_WITH_ARGS(HaskellCPPCmd, HaskellCPPArgs)
 
 dnl ** Which ld to use?
 dnl --------------------------------------------------------------
-FIND_LD([LdCmd])
+FP_ARG_WITH_PATH_GNU_PROG([LD], [ld], [ld])
+LdCmd="$LD"
 AC_SUBST([LdCmd])
 
 dnl ** Which nm to use?

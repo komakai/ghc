@@ -1,0 +1,5 @@
+PC
+./configure --with-gcc=/usr/bin/gcc32 --with-ld=/usr/bin/ld32 -build=i386-unknown-linux -host=i386-unknown-linux
+Android
+./configure  --with-gcc=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-gcc --with-ld.gold=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ld-wrap --with-nm=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-nm --with-ar=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ar --with-ranlib=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ranlib --build=i386-unknown-linux --host=arm-unknown-linux CFLAGS="-w -I$ANDROID_NDK/platforms/android-3/arch-arm/usr/include -march=armv5te -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -DANDROID -DINTERACTIVE_EDITION -DUSE_FIXUPS -DNATIVE_INPUT -funwind-tables -fstack-protector -Wno-psabi -mtune=xscale -msoft-float -mthumb -Os -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64" LDFLAGS="--sysroot=$ANDROID_NDK/platforms/android-3/arch-arm -lgcc -no-canonical-prefixes -Wl,-z,noexecstack -lc -lm -llog" 
+
