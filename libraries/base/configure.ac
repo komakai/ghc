@@ -49,6 +49,8 @@ AC_CHECK_FUNCS([_chsize ftruncate])
 
 AC_CHECK_FUNCS([epoll_ctl eventfd kevent kevent64 kqueue poll])
 
+AC_CHECK_FUNCS([mkfifo tcgetattr tcsetattr])
+
 # event-related fun
 
 if test "$ac_cv_header_sys_epoll_h" = yes -a "$ac_cv_func_epoll_ctl" = yes; then
@@ -188,8 +190,8 @@ FP_SEARCH_LIBS_PROTO(iconv,
                       iconv(cd,NULL,NULL,NULL,NULL);
                       iconv_close(cd);],
                      iconv,
-                     [EXTRA_LIBS="$EXTRA_LIBS $ac_lib"],
-                     [AC_MSG_ERROR([iconv is required on non-Windows platforms])])
+                     [AC_DEFINE([HAVE_LIBICONV], [1], [Define to 1 if you have libiconv.])
+                      EXTRA_LIBS="$EXTRA_LIBS $ac_lib"])
 
 # If possible, we use libcharset instead of nl_langinfo(CODESET) to
 # determine the current locale's character encoding.

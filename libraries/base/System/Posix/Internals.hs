@@ -32,7 +32,7 @@ import Foreign.C
 -- import Data.Bits
 import Data.Maybe
 
-#if !defined(HTYPE_TCFLAG_T)
+#if !defined(HAVE_TCGETATTR) || !defined(HAVE_TCSETATTR) || !defined(HTYPE_TCFLAG_T)
 import System.IO.Error
 #endif
 
@@ -183,7 +183,7 @@ peekFilePathLen fp = getFileSystemEncoding >>= \enc -> GHC.peekCStringLen enc fp
 -- ---------------------------------------------------------------------------
 -- Terminal-related stuff
 
-#if defined(HTYPE_TCFLAG_T)
+#if defined(HAVE_TCGETATTR) && defined(HAVE_TCSETATTR) && defined(HTYPE_TCFLAG_T)
 
 setEcho :: FD -> Bool -> IO ()
 setEcho fd on = do
@@ -259,7 +259,7 @@ foreign import ccall unsafe "HsBase.h __hscore_get_saved_termios"
 foreign import ccall unsafe "HsBase.h __hscore_set_saved_termios"
    set_saved_termios :: CInt -> (Ptr CTermios) -> IO ()
 
-#else
+#elif defined(__MINGW32__)
 
 -- 'raw' mode for Win32 means turn off 'line input' (=> buffering and
 -- character translation for the console.) The Win32 API for doing
@@ -307,6 +307,24 @@ foreign import ccall unsafe "consUtils.h get_console_echo__"
 
 foreign import ccall unsafe "consUtils.h is_console__"
    is_console :: CInt -> IO CInt
+
+#else
+
+ioe_unk_error :: String -> String -> IOException
+ioe_unk_error loc msg
+ = ioeSetErrorString (mkIOError OtherError loc Nothing Nothing) msg
+
+setCooked :: FD -> Bool -> IO ()
+setCooked fd cooked = do
+  ioError (ioe_unk_error "setCooked" "not implemented")
+
+setEcho :: FD -> Bool -> IO ()
+setEcho fd on = do
+  ioError (ioe_unk_error "setEcho" "not implemented")
+
+getEcho :: FD -> IO Bool
+getEcho fd = do
+  ioError (ioe_unk_error "getEcho" "not implemented")
 
 #endif
 
@@ -443,9 +461,11 @@ foreign import ccall unsafe "HsBase.h fork"
 foreign import ccall unsafe "HsBase.h link"
    c_link :: CString -> CString -> IO CInt
 
+#if defined(HAVE_MKFIFO)
 -- capi is required at least on Android
 foreign import capi unsafe "HsBase.h mkfifo"
    c_mkfifo :: CString -> CMode -> IO CInt
+#endif
 
 foreign import ccall unsafe "HsBase.h pipe"
    c_pipe :: Ptr CInt -> IO CInt
@@ -459,6 +479,7 @@ foreign import capi unsafe "signal.h sigaddset"
 foreign import capi unsafe "signal.h sigprocmask"
    c_sigprocmask :: CInt -> Ptr CSigset -> Ptr CSigset -> IO CInt
 
+#if defined(HAVE_TCGETATTR) && defined(HAVE_TCSETATTR)
 -- capi is required at least on Android
 foreign import capi unsafe "HsBase.h tcgetattr"
    c_tcgetattr :: CInt -> Ptr CTermios -> IO CInt
@@ -466,6 +487,7 @@ foreign import capi unsafe "HsBase.h tcgetattr"
 -- capi is required at least on Android
 foreign import capi unsafe "HsBase.h tcsetattr"
    c_tcsetattr :: CInt -> CInt -> Ptr CTermios -> IO CInt
+#endif
 
 foreign import capi unsafe "HsBase.h utime"
    c_utime :: CString -> Ptr CUtimbuf -> IO CInt

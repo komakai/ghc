@@ -35,11 +35,7 @@ const char* localeEncoding(void)
     return nl_langinfo(CODESET);
 
 #else
-#warning Depending on the unportable behavior of GNU iconv due to absence of both libcharset and langinfo.h
-    /* GNU iconv accepts "" to mean the current locale's
-     * encoding. Warning: This isn't portable.
-     */
-    return "";
+    return "UTF-8";
 #endif
 }
 #endif
