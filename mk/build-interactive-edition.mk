@@ -9,7 +9,6 @@ INTEGER_LIBRARY=integer-simple
 SplitObjs = NO
 GhcWithNativeCodeGen = NO
 GhcWithInterpreter = YES
-UseLibFFIForAdjustors = YES
 HaveDtrace = NO
 HADDOCK_DOCS = NO
 

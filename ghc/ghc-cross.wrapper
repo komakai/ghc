@@ -1,1 +1,1 @@
-exec "$executablename" -B"$topdir" ${1+"$@"} -pgma "$pgmgcc" -pgmc "$pgmgcc" -pgml "$pgmgcc"
+exec "$executablename" -B"$topdir" -DSTAGE=2 -optc-DSTAGE=2 ${1+"$@"} -pgma "$pgmgcc" -pgmc "$pgmgcc" -pgml "$pgmgcc"

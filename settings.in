@@ -19,7 +19,7 @@
  ("libtool command", "@SettingsLibtoolCommand@"),
  ("readelf command", "@SettingsReadElfCommand@"),
  ("perl command", "@SettingsPerlCommand@"),
- ("cross compiling", "@CrossCompiling@"),
+ ("cross compiling", "@BuildingCrossCompiler@"),
  ("target os", "@HaskellTargetOs@"),
  ("target arch", "@HaskellTargetArch@"),
  ("target word size", "@WordSize@"),

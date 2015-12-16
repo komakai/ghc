@@ -337,7 +337,7 @@ nat getNumberOfProcessors (void)
 
 KernelThreadId kernelThreadId (void)
 {
-#if defined(linux_HOST_OS)
+#if defined(linux_HOST_OS) && !defined(INTERACTIVE_EDITION)
     pid_t tid = syscall(SYS_gettid); // no really, see man gettid
     return (KernelThreadId) tid;
 

@@ -14,7 +14,9 @@
 #ifndef SM_GC_H
 #define SM_GC_H
 
-#include "BeginPrivate.h"
+#include "../BeginPrivate.h"
+
+void revertAllCAFs (void);
 
 void GarbageCollect (rtsBool force_major_gc,
                      rtsBool do_heap_census,
@@ -61,6 +63,6 @@ void releaseGCThreads (Capability *cap);
 
 #define WORK_UNIT_WORDS 128
 
-#include "EndPrivate.h"
+#include "../EndPrivate.h"
 
 #endif /* SM_GC_H */

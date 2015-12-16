@@ -125,7 +125,14 @@ module DynFlags (
 #endif
         dynamicGhc,
 
-#include "../includes/dist-derivedconstants/header/GHCConstantsHaskellExports.hs"
+#if STAGE==1
+#include "../includes/stage1/dist-derivedconstants/header/GHCConstantsHaskellExports.hs"
+#elif STAGE==2
+#include "../includes/stage2/dist-derivedconstants/header/GHCConstantsHaskellExports.hs"
+#else
+#error "Invalid STAGE !!!"
+#endif
+
         bLOCK_SIZE_W,
         wORD_SIZE_IN_BITS,
         tAG_MASK,
@@ -4079,7 +4086,15 @@ compilerInfo dflags
   where
     isWindows = platformOS (targetPlatform dflags) == OSMinGW32
 
-#include "../includes/dist-derivedconstants/header/GHCConstantsHaskellWrappers.hs"
+
+#if STAGE==1
+#include "../includes/stage1/dist-derivedconstants/header/GHCConstantsHaskellWrappers.hs"
+#elif STAGE==2
+#include "../includes/stage2/dist-derivedconstants/header/GHCConstantsHaskellWrappers.hs"
+#else
+#error "Invalid STAGE !!!"
+#endif
+
 
 bLOCK_SIZE_W :: DynFlags -> Int
 bLOCK_SIZE_W dflags = bLOCK_SIZE dflags `quot` wORD_SIZE dflags

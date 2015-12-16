@@ -23,7 +23,9 @@ docs/users_guide_DOCBOOK_SOURCES :=                           \
 $(docs/users_guide_GENERATED_DOCBOOK_SOURCES): %.xml: $(mkUserGuidePart_INPLACE)
 	$(mkUserGuidePart_INPLACE) $@
 
+ifneq "$(InteractiveEdition)" "YES"
 $(eval $(call docbook,docs/users_guide,users_guide))
+endif
 
 $(eval $(call clean-target,docs/users_guide,gen,$(docs/users_guide_GENERATED_DOCBOOK_SOURCES)))
 

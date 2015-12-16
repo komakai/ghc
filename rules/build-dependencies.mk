@@ -17,19 +17,25 @@ $(call profStart, build-dependencies($1,$2,$3))
 # $2 = distdir
 # $3 = GHC stage to use (0 == bootstrapping compiler)
 
+ifeq "$3" "0"
+$3_builddep_targetstage=1
+else
+$3_builddep_targetstage=2
+endif
+
 $1_$2_depfile_haskell = $$($1_$2_depfile_base).haskell
 $1_$2_depfile_c_asm = $$($1_$2_depfile_base).c_asm
 
 $1_$2_C_FILES_DEPS = $$(filter-out $$($1_$2_C_FILES_NODEPS),$$($1_$2_C_FILES))
 
 $1_$2_MKDEPENDHS_FLAGS = -dep-makefile $$($1_$2_depfile_haskell).tmp $$(foreach way,$$($1_$2_WAYS),-dep-suffix "$$(patsubst %o,%,$$($$(way)_osuf))")
-$1_$2_MKDEPENDHS_FLAGS += -include-pkg-deps
+$1_$2_MKDEPENDHS_FLAGS += -include-pkg-deps -DSTAGE=$$($3_builddep_targetstage)
 
 ifneq "$$(NO_GENERATED_MAKEFILE_RULES)" "YES"
 
 # Some of the Haskell files (e.g. utils/hsc2hs/Main.hs) (directly or
 # indirectly) include the generated includes files.
-$$($1_$2_depfile_haskell) : $$(includes_H_CONFIG) $$(includes_H_PLATFORM)
+$$($1_$2_depfile_haskell) : $$(includes_H_CONFIG_STAGE$$($3_builddep_targetstage)) $$(includes_H_PLATFORM_STAGE$$($3_builddep_targetstage))
 
 $$($1_$2_depfile_haskell) : $$($1_$2_HS_SRCS) $$($1_$2_HS_BOOT_SRCS) $$$$($1_$2_HC_MK_DEPEND_DEP) | $$$$(dir $$$$@)/.
 	$$(call removeFiles,$$@.tmp)
@@ -74,7 +80,7 @@ ifneq "$$(strip $$($1_$2_C_FILES_DEPS) $$($1_$2_S_FILES)) $$($1_$2_CMM_FILES))" 
 # than 3), so instead we just pass the list of ways in and let addCFileDeps
 # copy the deps for each way on the assumption that they are the same
 	$$(foreach f,$$($1_$2_C_FILES_DEPS) $$($1_$2_S_FILES) $$($1_$2_CMM_FILES), \
-	    $$(call addCFileDeps,$1,$2,$$($1_$2_depfile_c_asm),$$f,$$($1_$2_WAYS)))
+           $$(call addCFileDeps,$1,$2,$$($1_$2_depfile_c_asm),$$f,$$($1_$2_WAYS),$$($3_builddep_targetstage)))
 	$$(call removeFiles,$$@.bit)
 endif
 	echo "$1_$2_depfile_c_asm_EXISTS = YES" >> $$@.tmp
@@ -96,6 +102,7 @@ endef
 # $3 = depfile
 # $4 = file
 # $5 = ways
+# $6 = targetstage
 #
 # The formatting of this definition (e.g. the blank line above) is
 # important, in order to get make to generate the right makefile code.
@@ -144,7 +151,7 @@ endef
 
 define addCFileDeps
 
-	$(CPP) $($1_$2_MKDEPENDC_OPTS) $($1_$2_$(firstword $($1_$2_WAYS))_ALL_CC_OPTS) $($(basename $4)_CC_OPTS) -MM -x c $4 -MF $3.bit
+	$(CPP) $($1_$2_MKDEPENDC_OPTS) -DSTAGE=$6 $($1_$2_$(firstword $($1_$2_WAYS))_ALL_CC_OPTS) $($(basename $4)_CC_OPTS) -MM -x c $4 -MF $3.bit
 	$(foreach w,$5,sed -e 's|\\|/|g' -e 's| /$$| \\|' -e "1s|\.o|\.$($w_osuf)|" -e "1s|^|$(dir $4)|" -e "1s|$1/|$1/$2/build/|" -e "1s|$2/build/$2/build|$2/build|g" -e "s|$(TOP)/||g$(CASE_INSENSITIVE_SED)" $3.bit >> $3.tmp &&) true
 endef
 

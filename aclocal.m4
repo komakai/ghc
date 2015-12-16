@@ -571,17 +571,27 @@ AC_DEFUN([FPTOOLS_SET_C_LD_FLAGS],
         # On arm/linux and arm/android, tell gcc to generate Arm
         # instructions (ie not Thumb) and to link using the gold linker.
         # Forcing LD to be ld.gold is done in FIND_LD m4 macro.
-        $2="$$2 -marm"
-        $3="$$3 -fuse-ld=gold -Wl,-z,noexecstack"
-        $4="$$4 -z noexecstack"
+	#
+	# komakai: if anybody needs these then they should set them via the
+	# komakai: CFLAGS and LDFLAGS. Harding code flags like this makes the
+	# komakai: build extremely fragile.
+	#
+        # $2="$$2 -marm"
+        # $3="$$3 -fuse-ld=gold -Wl,-z,noexecstack"
+        # $4="$$4 -z noexecstack"
         ;;
 
     aarch64*linux*)
         # On aarch64/linux and aarch64/android, tell gcc to link using the
         # gold linker.
         # Forcing LD to be ld.gold is done in FIND_LD m4 macro.
-        $3="$$3 -fuse-ld=gold -Wl,-z,noexecstack"
-        $4="$$4 -z noexecstack"
+	#
+	# komakai: if anybody needs these then they should set them via the
+	# komakai: CFLAGS and LDFLAGS. Harding code flags like this makes the
+	# komakai: build extremely fragile.
+	#
+        # $3="$$3 -fuse-ld=gold -Wl,-z,noexecstack"
+        # $4="$$4 -z noexecstack"
         ;;
     esac
 
@@ -1663,7 +1673,8 @@ AC_CHECK_FUNC([timer_create],[HAVE_timer_create=yes],[HAVE_timer_create=no])
 
 if test "$HAVE_timer_create" = "yes"
 then
-  if test "$cross_compiling" = "yes"
+  if test "$building_cross_compiler" = "yes" ||
+     test "$cross_compiling" = "yes"
   then
     # We can't test timer_create when we're cross-compiling, so we
     # optimistiaclly assume that it actually works properly.
@@ -2226,7 +2237,7 @@ AC_DEFUN([FIND_READELF],[
 ])
 
 AC_DEFUN([MAYBE_OVERRIDE_STAGE0],[
-  if test ! -z "$With_$1" -a "$CrossCompiling" != "YES"; then
+  if test ! -z "$With_$1" -a "$BuildingCrossCompiler" != "YES"; then
       AC_MSG_NOTICE([Not cross-compiling, so --with-$1 also sets $2])
       $2=$With_$1
   fi

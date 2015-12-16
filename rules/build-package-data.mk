@@ -50,12 +50,18 @@ endif
 # for a feature it may not generate warning-free C code, and thus may
 # think that the feature doesn't exist if -Werror is on.
 $1_$2_CONFIGURE_CFLAGS = $$(filter-out -Werror,$$(SRC_CC_OPTS)) $$(CONF_CC_OPTS_STAGE$3) $$($1_CC_OPTS) $$($1_$2_CC_OPTS) $$(SRC_CC_WARNING_OPTS)
-$1_$2_CONFIGURE_LDFLAGS = $$(SRC_LD_OPTS) $$($1_LD_OPTS) $$($1_$2_LD_OPTS)
+$1_$2_CONFIGURE_LDFLAGS = $$(SRC_LD_OPTS) $$(CONF_LD_LINKER_OPTS_STAGE$3) $$($1_LD_OPTS) $$($1_$2_LD_OPTS)
 $1_$2_CONFIGURE_CPPFLAGS = $$(SRC_CPP_OPTS) $$(CONF_CPP_OPTS_STAGE$3) $$($1_CPP_OPTS) $$($1_$2_CPP_OPTS)
+$1_$2_CONFIGURE_OPTS += --configure-option=--build=$$(BUILDPLATFORM)
+$1_$2_CONFIGURE_OPTS += --configure-option=--host=$$(HOSTPLATFORM)
 
 $1_$2_CONFIGURE_OPTS += --configure-option=CFLAGS="$$($1_$2_CONFIGURE_CFLAGS)"
 $1_$2_CONFIGURE_OPTS += --configure-option=LDFLAGS="$$($1_$2_CONFIGURE_LDFLAGS)"
 $1_$2_CONFIGURE_OPTS += --configure-option=CPPFLAGS="$$($1_$2_CONFIGURE_CPPFLAGS)"
+
+ifeq "$(ConfigureIosDev)" "YES"
+$1_$2_CONFIGURE_OPTS += --skip-final-check
+endif
 
 # Also pass these as gcc-options, because Cabal uses them to check for
 # the existence of foreign libraries.
@@ -85,7 +91,7 @@ ifneq "$$(CURSES_LIB_DIRS)" ""
 $1_$2_CONFIGURE_OPTS += --configure-option=--with-curses-libraries="$$(CURSES_LIB_DIRS)"
 endif
 
-ifeq "$$(CrossCompiling)" "YES"
+ifeq "$$(BuildingCrossCompiler)" "YES"
 $1_$2_CONFIGURE_OPTS += --configure-option=--host=$(TargetPlatformFull)
 endif
 

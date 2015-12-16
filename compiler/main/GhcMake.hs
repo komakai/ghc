@@ -1775,11 +1775,15 @@ summariseFile hsc_env old_summaries file mb_phase obj_allowed maybe_buf
 
         -- when the user asks to load a source file by name, we only
         -- use an object file if -fobject-code is on.  See #1205.
+#ifdef INTERACTIVE_EDITION
+        obj_timestamp <- return Nothing
+#else
         obj_timestamp <-
             if isObjectTarget (hscTarget (hsc_dflags hsc_env))
                || obj_allowed -- bug #1205
                 then liftIO $ modificationTimeIfExists (ml_obj_file location)
                 else return Nothing
+#endif
 
         hi_timestamp <- maybeGetIfaceDate dflags location
 

@@ -751,6 +751,7 @@ getOutputFilename stop_phase output basename dflags next_phase maybe_location
                                            Nothing ->
                                                panic "SpecificFile: No filename"
  | keep_this_output                      = persistent_fn
+ | no_output                             = return []
  | otherwise                             = newTempName dflags suffix
     where
           hcsuf      = hcSuf dflags
@@ -759,6 +760,7 @@ getOutputFilename stop_phase output basename dflags next_phase maybe_location
           keep_hc    = gopt Opt_KeepHcFiles dflags
           keep_s     = gopt Opt_KeepSFiles dflags
           keep_bc    = gopt Opt_KeepLlvmFiles dflags
+          no_output  = ghcLink dflags == LinkInMemory && next_phase == StopLn
 
           myPhaseInputExt HCc       = hcsuf
           myPhaseInputExt MergeStub = osuf
@@ -1125,7 +1127,11 @@ runPhase (RealPhase cc_phase) input_fn dflags
                    | otherwise            = []
 
         -- Decide next phase
+#ifdef NO_ASSEMBLER
+        next_phase <- maybeMergeStub
+#else
         let next_phase = As False
+#endif
         output_fn <- phaseOutputFilename next_phase
 
         let
@@ -1194,7 +1200,11 @@ runPhase (RealPhase cc_phase) input_fn dflags
                              then gcc_extra_viac_flags ++ more_hcc_opts
                              else [])
                        ++ verbFlags
+#ifdef NO_ASSEMBLER
+                       ++ [ "-c" ]
+#else
                        ++ [ "-S" ]
+#endif
                        ++ cc_opt
                        ++ [ "-D__GLASGOW_HASKELL__="++cProjectVersionInt
                           , "-include", ghcVersionH
@@ -2191,53 +2201,7 @@ getBackendDefs _ =
 
 joinObjectFiles :: DynFlags -> [FilePath] -> FilePath -> IO ()
 joinObjectFiles dflags o_files output_fn = do
-  let mySettings = settings dflags
-      ldIsGnuLd = sLdIsGnuLd mySettings
-      osInfo = platformOS (targetPlatform dflags)
-      ld_r args cc = SysTools.runLink dflags ([
-                       SysTools.Option "-nostdlib",
-                       SysTools.Option "-Wl,-r"
-                     ]
-                     ++ (if any (cc ==) [Clang, AppleClang, AppleClang51]
-                          then []
-                          else [SysTools.Option "-nodefaultlibs"])
-                     ++ (if osInfo == OSFreeBSD
-                          then [SysTools.Option "-L/usr/lib"]
-                          else [])
-                        -- gcc on sparc sets -Wl,--relax implicitly, but
-                        -- -r and --relax are incompatible for ld, so
-                        -- disable --relax explicitly.
-                     ++ (if platformArch (targetPlatform dflags) == ArchSPARC
-                         && ldIsGnuLd
-                            then [SysTools.Option "-Wl,-no-relax"]
-                            else [])
-                     ++ map SysTools.Option ld_build_id
-                     ++ [ SysTools.Option "-o",
-                          SysTools.FileOption "" output_fn ]
-                     ++ args)
-
-      -- suppress the generation of the .note.gnu.build-id section,
-      -- which we don't need and sometimes causes ld to emit a
-      -- warning:
-      ld_build_id | sLdSupportsBuildId mySettings = ["-Wl,--build-id=none"]
-                  | otherwise                     = []
-
-  ccInfo <- getCompilerInfo dflags
-  if ldIsGnuLd
-     then do
-          script <- newTempName dflags "ldscript"
-          cwd <- getCurrentDirectory
-          let o_files_abs = map (cwd </>) o_files
-          writeFile script $ "INPUT(" ++ unwords o_files_abs ++ ")"
-          ld_r [SysTools.FileOption "" script] ccInfo
-     else if sLdSupportsFilelist mySettings
-     then do
-          filelist <- newTempName dflags "filelist"
-          writeFile filelist $ unlines o_files
-          ld_r [SysTools.Option "-Wl,-filelist",
-                SysTools.FileOption "-Wl," filelist] ccInfo
-     else do
-          ld_r (map (SysTools.FileOption "") o_files) ccInfo
+ SysTools.runLink dflags ( [ SysTools.Option "-r", SysTools.Option "-o", SysTools.FileOption "" output_fn ] ++ map (SysTools.FileOption "") o_files )
 
 -- -----------------------------------------------------------------------------
 -- Misc.

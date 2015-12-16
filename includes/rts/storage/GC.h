@@ -10,7 +10,7 @@
 #define RTS_STORAGE_GC_H
 
 #include <stddef.h>
-#include "rts/OSThreads.h"
+#include "../OSThreads.h"
 
 /* -----------------------------------------------------------------------------
  * Generational GC

@@ -41,9 +41,11 @@ rts_C_SRCS := $(wildcard rts/*.c $(foreach dir,$(ALL_DIRS),rts/$(dir)/*.c))
 rts_CMM_SRCS := $(wildcard rts/*.cmm)
 
 # Don't compile .S files when bootstrapping a new arch
+ifneq "$(InteractiveEdition)" "YES"
 ifneq "$(PORTING_HOST)" "YES"
 ifneq "$(findstring $(TargetArch_CPP), i386 powerpc powerpc64)" ""
 rts_S_SRCS += rts/AdjustorAsm.S
+endif
 endif
 endif
 
@@ -106,6 +108,7 @@ endef
 $(foreach lib,$(ALL_RTS_DEF_LIBNAMES),$(eval $(call make-importlib-def,$(lib))))
 endif
 
+ifneq "$(InteractiveEdition)" "YES"
 ifneq "$(BINDIST)" "YES"
 ifneq "$(UseSystemLibFFI)" "YES"
 ifeq "$(HostOS_CPP)" "mingw32" 
@@ -118,6 +121,7 @@ rts/dist/build/lib$(LIBFFI_NAME)$(soext): libffi/build/inst/lib/lib$(LIBFFI_NAME
 	cp libffi/build/inst/lib/lib$(LIBFFI_NAME)$(soext)* rts/dist/build
 ifeq "$(TargetOS_CPP)" "darwin"
 	install_name_tool -id @rpath/lib$(LIBFFI_NAME)$(soext) rts/dist/build/lib$(LIBFFI_NAME)$(soext)
+endif
 endif
 endif
 endif
@@ -170,15 +174,19 @@ ifeq "$(TargetOS_CPP)" "solaris2"
 rts_$1_DTRACE_OBJS = rts/dist/build/RtsProbes.$$($1_osuf)
 
 rts/dist/build/RtsProbes.$$($1_osuf) : $$(rts_$1_OBJS)
-	$(DTRACE) -G -C $$(addprefix -I,$$(GHC_INCLUDE_DIRS)) -DDTRACE -s rts/RtsProbes.d -o \
+	$(DTRACE) -G -C $$(addprefix -I,$$(GHC_INCLUDE_DIRS_STAGE2)) -DDTRACE -s rts/RtsProbes.d -o \
 		$$@ $$(rts_$1_OBJS)
 endif
 endif
 
 rts_dist_$1_CC_OPTS += -DRtsWay=\"rts_$1\"
 
+ifneq "$(InteractiveEdition)" "YES"
 ifneq "$$(UseSystemLibFFI)" "YES"
 rts_dist_FFI_SO = rts/dist/build/lib$$(LIBFFI_NAME)$$(soext)
+else
+rts_dist_FFI_SO =
+endif
 else
 rts_dist_FFI_SO =
 endif
@@ -194,6 +202,7 @@ $$(rts_$1_LIB) : $$(rts_$1_OBJS) $$(ALL_RTS_DEF_LIBS) rts/dist/libs.depend rts/d
          $$(rts_dist_$1_GHC_LD_OPTS) \
          -o $$@
 else
+ifneq "$(InteractiveEdition)" "YES"
 ifneq "$$(UseSystemLibFFI)" "YES"
 LIBFFI_LIBS = -Lrts/dist/build -l$$(LIBFFI_NAME)
 ifeq "$$(TargetElf)" "YES"
@@ -206,6 +215,7 @@ endif
 else
 # flags will be taken care of in rts/dist/libs.depend
 LIBFFI_LIBS =
+endif
 endif
 
 ifeq "$$(GhcUnregisterised)" "YES"
@@ -225,13 +235,18 @@ $$(rts_$1_LIB) : $$(rts_$1_OBJS) $$(rts_$1_DTRACE_OBJS)
 	echo $$(rts_$1_OBJS) $$(rts_$1_DTRACE_OBJS) | "$$(XARGS)" $$(XARGS_OPTS) "$$(AR_STAGE1)" \
 		$$(AR_OPTS_STAGE1) $$(EXTRA_AR_ARGS_STAGE1) $$@
 
+ifneq "$(InteractiveEdition)" "YES"
 ifneq "$$(UseSystemLibFFI)" "YES"
 $$(rts_$1_LIB) : rts/dist/build/libC$$(LIBFFI_NAME)$$($1_libsuf)
 rts/dist/build/libC$$(LIBFFI_NAME)$$($1_libsuf): libffi/build/inst/lib/libffi.a
 	cp $$< $$@
 endif
+endif
 
 endif
+
+$1_ALL_OBJS += $$(rts_$1_OBJS)
+$1_ALL_DEPS += $$(rts_$1_LIB)
 
 endif
 
@@ -277,7 +292,7 @@ WARNING_OPTS += -Wredundant-decls
 # support for registerised builds on this arch. -- BL 2010/02/03
 # WARNING_OPTS += -Wcast-align
 
-STANDARD_OPTS += $(addprefix -I,$(GHC_INCLUDE_DIRS)) -Irts -Irts/dist/build
+STANDARD_OPTS += $(addprefix -I,$(GHC_INCLUDE_DIRS_STAGE2)) -Irts -Irts/dist/build
 # COMPILING_RTS is only used when building Win32 DLL support.
 STANDARD_OPTS += -DCOMPILING_RTS
 
@@ -492,7 +507,12 @@ else # UseSystemLibFFI==YES
 
 rts_PACKAGE_CPP_OPTS += -DFFI_INCLUDE_DIR=
 rts_PACKAGE_CPP_OPTS += -DFFI_LIB_DIR=
+ifneq "$(ConfigureInteractiveEdition)$(InteractiveEdition)" "YES"
 rts_PACKAGE_CPP_OPTS += '-DFFI_LIB="C$(LIBFFI_NAME)"'
+else
+rts_PACKAGE_CPP_OPTS += '-DFFI_LIB='
+endif
+
 
 endif
 
@@ -550,7 +570,7 @@ DTRACE_FLAGS = -x cpppath=$(WhatGccIsCalled)
 endif
 
 DTRACEPROBES_SRC = rts/RtsProbes.d
-$(DTRACEPROBES_H): $(DTRACEPROBES_SRC) includes/ghcplatform.h | $$(dir $$@)/.
+$(DTRACEPROBES_H): $(DTRACEPROBES_SRC) includes/stage2/ghcplatform.h | $$(dir $$@)/.
 	"$(DTRACE)" $(filter -I%,$(rts_CC_OPTS)) -C $(DTRACE_FLAGS) -h -o $@ -s $<
 endif
 
@@ -566,27 +586,33 @@ ifeq "$(HaveLibMingwEx)" "YES"
 rts_PACKAGE_CPP_OPTS += -DHAVE_LIBMINGWEX
 endif
 
-$(eval $(call manual-package-config,rts))
+rts/dist/package.conf.inplace : $$(includes_H_CONFIG_STAGE2) $$(includes_H_PLATFORM_STAGE2)
 
-rts/package.conf.inplace : $(includes_H_CONFIG) $(includes_H_PLATFORM)
+$(eval $(call manual-package-config,rts))
 
 # -----------------------------------------------------------------------------
 # installing
 
 RTS_INSTALL_LIBS += $(ALL_RTS_LIBS)
+ifneq "$(InteractiveEdition)" "YES"
 ifneq "$(UseSystemLibFFI)" "YES"
 RTS_INSTALL_LIBS += $(wildcard rts/dist/build/lib$(LIBFFI_NAME)*$(soext)*)
 RTS_INSTALL_LIBS += $(foreach w,$(filter-out %dyn,$(rts_WAYS)),rts/dist/build/libC$(LIBFFI_NAME)$($w_libsuf))
 endif
+endif
 
+ifneq "$(InteractiveEdition)" "YES"
 ifneq "$(UseSystemLibFFI)" "YES"
 install: install_libffi_headers
 endif
+endif
 
+ifneq "$(InteractiveEdition)" "YES"
 .PHONY: install_libffi_headers
 install_libffi_headers :
 	$(call INSTALL_DIR,"$(DESTDIR)$(ghcheaderdir)")
 	$(call INSTALL_HEADER,$(INSTALL_OPTS),$(libffi_HEADERS),"$(DESTDIR)$(ghcheaderdir)/")
+endif
 
 # -----------------------------------------------------------------------------
 # cleaning

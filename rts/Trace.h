@@ -87,6 +87,8 @@ void traceEnd (void);
 
 #ifdef TRACING
 
+#define TRACE_RTS_UNLIKELY(p) RTS_UNLIKELY(p)
+
 /* 
  * Record a scheduler event
  */
@@ -278,6 +280,8 @@ void traceTaskMigrate_ (Task       *task,
 void traceTaskDelete_ (Task       *task);
 
 #else /* !TRACING */
+
+#define TRACE_RTS_UNLIKELY(p) 0
 
 #define traceSchedEvent(cap, tag, tso, other) /* nothing */
 #define traceSchedEvent2(cap, tag, tso, other, info) /* nothing */
@@ -581,7 +585,7 @@ INLINE_HEADER void traceThreadLabel(Capability *cap   STG_UNUSED,
                                     StgTSO     *tso   STG_UNUSED,
                                     char       *label STG_UNUSED)
 {
-    if (RTS_UNLIKELY(TRACE_sched)) {
+    if (TRACE_RTS_UNLIKELY(TRACE_sched)) {
         traceThreadLabel_(cap, tso, label);
     }
     dtraceThreadLabel((EventCapNo)cap->no, (EventThreadID)tso->id, label);
@@ -659,7 +663,7 @@ INLINE_HEADER void traceEventGcStats(Capability *cap            STG_UNUSED,
                                      W_        par_max_copied STG_UNUSED,
                                      W_        par_tot_copied STG_UNUSED)
 {
-    if (RTS_UNLIKELY(TRACE_gc)) {
+    if (TRACE_RTS_UNLIKELY(TRACE_gc)) {
         traceEventGcStats_(cap, heap_capset, gen,
                            copied, slop, fragmentation,
                            par_n_threads, par_max_copied, par_tot_copied);
@@ -676,7 +680,7 @@ INLINE_HEADER void traceEventHeapInfo(CapsetID    heap_capset   STG_UNUSED,
                                       W_        mblockSize    STG_UNUSED,
                                       W_        blockSize     STG_UNUSED)
 {
-    if (RTS_UNLIKELY(TRACE_gc)) {
+    if (TRACE_RTS_UNLIKELY(TRACE_gc)) {
         traceEventHeapInfo_(heap_capset, gens,
                             maxHeapSize, allocAreaSize,
                             mblockSize, blockSize);
@@ -777,7 +781,7 @@ INLINE_HEADER void traceEventCreateSparkThread(Capability  *cap      STG_UNUSED,
 INLINE_HEADER void traceSparkCounters(Capability *cap STG_UNUSED)
 {
 #ifdef THREADED_RTS
-    if (RTS_UNLIKELY(TRACE_spark_sampled)) {
+    if (TRACE_RTS_UNLIKELY(TRACE_spark_sampled)) {
         traceSparkCounters_(cap, cap->spark_stats, sparkPoolSize(cap->sparks));
     }
     dtraceSparkCounters((EventCapNo)cap->no,
@@ -844,7 +848,7 @@ INLINE_HEADER void traceTaskCreate(Task       *task STG_UNUSED,
     ASSERT(cap != NULL);
     // A new task gets associated with a cap. We also record
     // the kernel thread id of the task, which should never change.
-    if (RTS_UNLIKELY(TRACE_sched)) {
+    if (TRACE_RTS_UNLIKELY(TRACE_sched)) {
         traceTaskCreate_(task, cap);
     }
     dtraceTaskCreate(serialisableTaskId(task),
@@ -861,7 +865,7 @@ INLINE_HEADER void traceTaskMigrate(Task       *task    STG_UNUSED,
     ASSERT(cap != new_cap);
     ASSERT(new_cap != NULL);
     // A task migrates from a cap to another.
-    if (RTS_UNLIKELY(TRACE_sched)) {
+    if (TRACE_RTS_UNLIKELY(TRACE_sched)) {
         traceTaskMigrate_(task, cap, new_cap);
     }
     dtraceTaskMigrate(serialisableTaskId(task), (EventCapNo)cap->no,
@@ -871,7 +875,7 @@ INLINE_HEADER void traceTaskMigrate(Task       *task    STG_UNUSED,
 INLINE_HEADER void traceTaskDelete(Task *task STG_UNUSED)
 {
     ASSERT(task->cap != NULL);
-    if (RTS_UNLIKELY(TRACE_sched)) {
+    if (TRACE_RTS_UNLIKELY(TRACE_sched)) {
         traceTaskDelete_(task);
     }
     dtraceTaskDelete(serialisableTaskId(task));

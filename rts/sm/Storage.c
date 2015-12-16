@@ -35,7 +35,9 @@
 
 #include <string.h>
 
+#ifndef INTERACTIVE_EDITION
 #include "ffi.h"
+#endif
 
 /* 
  * All these globals require sm_mutex to access in THREADED_RTS mode.
@@ -271,6 +273,7 @@ exitStorage (void)
 {
     updateNurseriesStats();
     stat_exit();
+    revertAllCAFs();
 }
 
 void
@@ -1306,7 +1309,18 @@ void flushExec (W_ len, AdjustorExecutable exec_addr)
 #endif
 }
 
-#if defined(linux_HOST_OS)
+#if defined(INTERACTIVE_EDITION)
+
+AdjustorWritable allocateExec (W_ bytes, AdjustorExecutable *exec_ret)
+{
+    return NULL;
+}
+
+void freeExec (AdjustorExecutable addr)
+{
+}
+
+#elif defined(linux_HOST_OS)
 
 // On Linux we need to use libffi for allocating executable memory,
 // because it knows how to work around the restrictions put in place

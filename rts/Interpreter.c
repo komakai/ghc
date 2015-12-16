@@ -37,7 +37,9 @@
 #endif
 #endif
 
+#ifndef INTERACTIVE_EDITION
 #include "ffi.h"
+#endif
 
 /* --------------------------------------------------------------------------
  * The bytecode interpreter
@@ -1370,7 +1372,11 @@ run_BCO:
             goto nextInsn;
         }
 
-        case bci_CCALL: {
+#ifdef INTERACTIVE_EDITION
+       case bci_CCALL:
+            barf("Foreign calls disabled");
+#else
+       case bci_CCALL: {
             void *tok;
             int stk_offset            = BCO_NEXT;
             int o_itbl                = BCO_GET_LARGE_ARG;
@@ -1500,6 +1506,7 @@ run_BCO:
 
             goto nextInsn;
         }
+#endif
 
         case bci_JMP: {
             /* BCO_NEXT modifies bciPtr, so be conservative. */

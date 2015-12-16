@@ -16,6 +16,8 @@
 int hs_main (int argc, char *argv[],     // program args
              StgClosure *main_closure,   // closure for Main.main
              RtsConfig rts_config)       // RTS configuration
-   GNUC3_ATTRIBUTE(__noreturn__);
-
+#ifndef INTERACTIVE_EDITION
+   GNUC3_ATTRIBUTE(__noreturn__)
+#endif
+;
 #endif /* RTSMAIN_H */

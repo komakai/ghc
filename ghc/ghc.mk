@@ -18,8 +18,23 @@ ghc_stage2_CONFIGURE_OPTS += --flags=stage2
 ghc_stage3_CONFIGURE_OPTS += --flags=stage3
 
 ifeq "$(GhcWithInterpreter)" "YES"
+ifeq "$(ConfigureInteractiveEdition)$(InteractiveEdition)" "YES"
+ghc_stage2_CONFIGURE_OPTS += --flags=interactiveghci
+else
 ghc_stage2_CONFIGURE_OPTS += --flags=ghci
+endif
+ifeq "$(InteractiveEdition)" "YES"
+ghc_stage3_CONFIGURE_OPTS += --flags=interactiveghci
+else
 ghc_stage3_CONFIGURE_OPTS += --flags=ghci
+endif
+endif
+
+ifeq "$(ConfigureAndroid)$(Android)" "YES"
+ghc_stage2_CONFIGURE_OPTS += --flags=android
+endif
+ifeq "$(Android)" "YES"
+ghc_stage3_CONFIGURE_OPTS += --flags=android
 endif
 
 ifeq "$(compiler_stage1_VERSION_MUNGED)" "YES"
@@ -132,22 +147,31 @@ all_ghc_stage1 : $(GHC_STAGE1)
 all_ghc_stage2 : $(GHC_STAGE2)
 all_ghc_stage3 : $(GHC_STAGE3)
 
-$(INPLACE_LIB)/settings : settings
+$(INPLACE_LIB)/settings.stage1 : settings.stage1
 	"$(CP)" $< $@
 
-$(INPLACE_LIB)/platformConstants: $(includes_GHCCONSTANTS_HASKELL_VALUE)
+$(INPLACE_LIB)/settings.stage2 : settings.stage2
+	"$(CP)" $< $@
+
+$(INPLACE_LIB)/platformConstants.stage1: $(includes_GHCCONSTANTS_HASKELL_VALUE_STAGE1)
+	"$(CP)" $< $@
+
+$(INPLACE_LIB)/platformConstants.stage2: $(includes_GHCCONSTANTS_HASKELL_VALUE_STAGE2)
 	"$(CP)" $< $@
 
 # The GHC programs need to depend on all the helper programs they might call,
 # and the settings files they use
 
-GHC_DEPENDENCIES += $$(unlit_INPLACE)
-GHC_DEPENDENCIES += $(INPLACE_LIB)/settings
-GHC_DEPENDENCIES += $(INPLACE_LIB)/platformConstants
+GHC_DEPENDENCIES_STAGE1 += $$(unlit_INPLACE)
+GHC_DEPENDENCIES_STAGE1 += $(INPLACE_LIB)/settings.stage1
+GHC_DEPENDENCIES_STAGE1 += $(INPLACE_LIB)/platformConstants.stage1
+GHC_DEPENDENCIES_STAGE2 += $$(unlit_INPLACE)
+GHC_DEPENDENCIES_STAGE2 += $(INPLACE_LIB)/settings.stage2
+GHC_DEPENDENCIES_STAGE2 += $(INPLACE_LIB)/platformConstants.stage2
 
-$(GHC_STAGE1) : | $(GHC_DEPENDENCIES)
-$(GHC_STAGE2) : | $(GHC_DEPENDENCIES)
-$(GHC_STAGE3) : | $(GHC_DEPENDENCIES)
+$(GHC_STAGE1) : | $(GHC_DEPENDENCIES_STAGE1)
+$(GHC_STAGE2) : | $(GHC_DEPENDENCIES_STAGE2)
+$(GHC_STAGE3) : | $(GHC_DEPENDENCIES_STAGE2)
 
 ifeq "$(GhcUnregisterised)" "NO"
 $(GHC_STAGE1) : | $$(ghc-split_INPLACE)

@@ -34,9 +34,9 @@ help:
 	@cat MAKEHELP.md
 
 ifneq "$(filter maintainer-clean distclean clean help,$(MAKECMDGOALS))" ""
--include mk/config.mk
+-include mk/stage1/config.mk
 else
-include mk/config.mk
+include mk/stage1/config.mk
 ifeq "$(ProjectVersion)" ""
 $(error Please run ./configure first)
 endif
@@ -66,14 +66,16 @@ REALGOALS=$(filter-out binary-dist binary-dist-prep bootstrapping-files framewor
 # NB. not the same as saying '%: ...', which doesn't do the right thing:
 # it does nothing if we specify a target that already exists.
 .PHONY: $(REALGOALS)
-$(REALGOALS) all: mk/config.mk.old mk/project.mk.old compiler/ghc.cabal.old
+$(REALGOALS) all: mk/stage1/config.mk.old mk/stage1/project.mk.old mk/stage2/config.mk.old mk/stage2/project.mk.old compiler/ghc.cabal.old
 ifneq "$(OMIT_PHASE_0)" "YES"
 	@echo "===--- building phase 0"
 	$(MAKE) -r --no-print-directory -f ghc.mk phase=0 phase_0_builds
 endif
 ifneq "$(OMIT_PHASE_1)" "YES"
-	@echo "===--- building phase 1"
-	$(MAKE) -r --no-print-directory -f ghc.mk phase=1 phase_1_builds
+	@echo "===--- building phase 1 sub-phase 1"
+	$(MAKE) -r --no-print-directory -f ghc.mk phase=1 subphase=1 phase_1_subphase_1_builds
+	@echo "===--- building phase 1 sub-phase 2"
+	$(MAKE) -r --no-print-directory -f ghc.mk phase=1 subphase=2 phase_1_subphase_2_builds
 endif
 	@echo "===--- building final phase"
 	$(MAKE) -r --no-print-directory -f ghc.mk phase=final $@

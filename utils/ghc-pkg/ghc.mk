@@ -14,7 +14,7 @@
 # Bootstrapping ghc-pkg
 
 utils/ghc-pkg/dist/build/Version.hs \
-utils/ghc-pkg/dist-install/build/Version.hs: mk/project.mk | $$(dir $$@)/.
+utils/ghc-pkg/dist-install/build/Version.hs: mk/stage1/project.mk | $$(dir $$@)/.
 	$(call removeFiles,$@)
 	echo "module Version where"                    >> $@
 	echo "version, targetOS, targetARCH :: String" >> $@
@@ -53,7 +53,7 @@ utils/ghc-pkg/dist/package-data.mk: \
 # -----------------------------------------------------------------------------
 # Normal case: Build ghc-pkg with stage 1 and install it
 
-ifneq "$(Stage1Only)" "YES"
+ifneq "$(ConfigureInteractiveEdition)$(InteractiveEdition)" "YES"
 
 utils/ghc-pkg_dist-install_USES_CABAL = YES
 
@@ -64,6 +64,8 @@ utils/ghc-pkg_dist-install_INSTALL_SHELL_WRAPPER_NAME = ghc-pkg-$(ProjectVersion
 utils/ghc-pkg_dist-install_INSTALL_INPLACE = NO
 
 $(eval $(call build-prog,utils/ghc-pkg,dist-install,1))
+
+utils/ghc-pkg_dist-install_HC_OPTS += -DSTAGE=2 -optc-DSTAGE=2
 
 utils/ghc-pkg/dist-install/package-data.mk: \
     utils/ghc-pkg/dist-install/build/Version.hs

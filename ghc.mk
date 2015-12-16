@@ -140,8 +140,28 @@ echo:
 
 include mk/tree.mk
 
+ifeq "$(phase)" ""
+phase = final
+endif
+
 ifeq "$(findstring clean,$(MAKECMDGOALS))" ""
-include mk/config.mk
+
+ifeq "$(phase)" "final"
+target_stage=2
+else
+ifeq "$(phase)$(subphase)" "12"
+target_stage=2
+else
+target_stage=1
+endif
+endif
+
+ifeq "$(target_stage)" "1"
+include mk/stage1/config.mk
+else
+include mk/stage2/config.mk
+endif
+
 ifeq "$(ProjectVersion)" ""
 $(error Please run ./configure first)
 endif
@@ -169,10 +189,6 @@ endif
 endif
 endif
 
-ifeq "$(phase)" ""
-phase = final
-endif
-
 # -----------------------------------------------------------------------------
 # Utility definitions
 
@@ -182,6 +198,11 @@ include rules/library-path.mk
 include rules/add-dependency.mk
 include rules/make-command.mk
 include rules/pretty_commands.mk
+ 
+# Link everything into one great big library
+
+include rules/link-all.mk
+include rules/link-all-way.mk
 
 # -----------------------------------------------------------------------------
 # Macros for standard targets
@@ -424,10 +445,14 @@ endif
 
 ifeq "$(Windows_Target)" "NO"
 ifneq "$(TargetOS_CPP)" "ios"
+ifneq "$(InteractiveEdition)$(ConfigureInteractiveEdition)" "YES"
 PACKAGES_STAGE1 += terminfo
 endif
 endif
+endif
+ifneq "$(InteractiveEdition)$(ConfigureInteractiveEdition)" "YES"
 PACKAGES_STAGE1 += haskeline
+endif
 
 # We normally install only the packages down to this point
 REGULAR_INSTALL_PACKAGES := $(addprefix libraries/,$(PACKAGES_STAGE1))
@@ -444,6 +469,7 @@ REGULAR_INSTALL_DYNLIBS += $(addprefix libraries/,$(PACKAGES_STAGE2))
 REGULAR_INSTALL_DYNLIBS := $(filter-out $(REGULAR_INSTALL_PACKAGES),\
                                         $(REGULAR_INSTALL_DYNLIBS))
 
+ifneq "$(BuildingCrossCompiler)" "YES"
 ifneq "$(CrossCompiling)" "YES"
 define addExtraPackage
 ifeq "$2" "-"
@@ -464,6 +490,7 @@ PACKAGES_STAGE2 += $1
 endif
 endef
 $(eval $(call foreachLibrary,addExtraPackage))
+endif
 endif
 
 # If we want to just install everything, then we want all the packages
@@ -523,7 +550,9 @@ utils/ghc-pwd/dist-install/package-data.mk: compiler/stage2/package-data.mk
 utils/ghc-cabal/dist-install/package-data.mk: compiler/stage2/package-data.mk
 
 utils/ghctags/dist-install/package-data.mk: compiler/stage2/package-data.mk
+ifneq "$(InteractiveEdition)" "YES"
 utils/dll-split/dist-install/package-data.mk: compiler/stage2/package-data.mk
+endif
 utils/hpc/dist-install/package-data.mk: compiler/stage2/package-data.mk
 utils/ghc-pkg/dist-install/package-data.mk: compiler/stage2/package-data.mk
 utils/hsc2hs/dist-install/package-data.mk: compiler/stage2/package-data.mk
@@ -622,7 +651,9 @@ BUILD_DIRS += driver
 BUILD_DIRS += driver/ghci
 BUILD_DIRS += driver/ghc
 BUILD_DIRS += driver/haddock
+ifneq "$(InteractiveEdition)" "YES"
 BUILD_DIRS += libffi
+endif
 BUILD_DIRS += utils/deriveConstants
 BUILD_DIRS += includes
 BUILD_DIRS += rts
@@ -681,7 +712,7 @@ BUILD_DIRS += utils/runghc
 BUILD_DIRS += ghc
 
 ifneq "$(BINDIST)" "YES"
-ifneq "$(CrossCompiling)-$(phase)" "YES-final"
+ifneq "$(BuildingCrossCompiler)-$(phase)" "YES-final"
 BUILD_DIRS += utils/mkUserGuidePart
 endif
 endif
@@ -695,6 +726,10 @@ BUILD_DIRS += utils/compare_sizes
 # Actually include all the sub-ghc.mk's
 
 include $(patsubst %, %/ghc.mk, $(BUILD_DIRS))
+
+ifeq "$(InteractiveEdition)" "YES"
+$(eval $(call linkall,ghc/linkall))
+endif
 
 # A useful pseudo-target (must be after the include above, because it needs
 # the value of things like $(libraries/base_dist-install_v_LIB).
@@ -977,8 +1012,8 @@ $(eval $(call bindist,.,\
     $(BINDIST_HI) \
     $(BINDIST_EXTRAS) \
     $(includes_H_FILES) \
-    $(includes_DERIVEDCONSTANTS) \
-    $(includes_GHCCONSTANTS) \
+    $(includes_DERIVEDCONSTANTS_STAGE2) \
+    $(includes_GHCCONSTANTS_STAGE2) \
     $(libffi_HEADERS) \
     $(INSTALL_LIBEXECS) \
     $(INSTALL_LIBEXEC_SCRIPTS) \
@@ -994,7 +1029,7 @@ $(eval $(call bindist,.,\
     $(wildcard libraries/*/*/dist-install/doc/) \
     $(filter-out settings,$(INSTALL_LIBS)) \
     $(RTS_INSTALL_LIBS) \
-    $(filter-out %/project.mk mk/config.mk %/mk/install.mk,$(MAKEFILE_LIST)) \
+    $(filter-out %/project.mk mk/stage1/config.mk mk/stage2/config.mk %/mk/install.mk,$(MAKEFILE_LIST)) \
     mk/project.mk \
     mk/install.mk.in \
     bindist.mk \
@@ -1244,10 +1279,6 @@ CLEAN_FILES += compiler/ghc.cabal.old
 
 # These are no longer generated, but we still clean them for a while
 # as they may still be in old GHC trees:
-CLEAN_FILES += includes/GHCConstants.h
-CLEAN_FILES += includes/DerivedConstants.h
-CLEAN_FILES += includes/ghcautoconf.h
-CLEAN_FILES += includes/ghcplatform.h
 CLEAN_FILES += includes/ghcversion.h
 CLEAN_FILES += utils/ghc-pkg/Version.hs
 CLEAN_FILES += compiler/prelude/primops.txt
@@ -1259,7 +1290,8 @@ clean : clean_files clean_libraries
 clean_files :
 	$(call removeFiles,$(CLEAN_FILES))
 # this is here since CLEAN_FILES can't handle folders
-	$(call removeTrees,includes/dist-derivedconstants)
+	$(call removeTrees,includes/stage1)
+	$(call removeTrees,includes/stage2)
 	$(call removeTrees,inplace/bin)
 	$(call removeTrees,inplace/lib)
 	$(call removeTrees,libraries/bootstrapping.conf)
@@ -1299,9 +1331,11 @@ distclean : clean
 	$(call removeFiles,mk/are-validating.mk)
 
 # Clean the files that we ask ./configure to create.
-	$(call removeFiles,mk/config.mk)
+	$(call removeFiles,mk/stage1/config.mk)
+	$(call removeFiles,mk/stage2/config.mk)
 	$(call removeFiles,mk/install.mk)
-	$(call removeFiles,mk/project.mk)
+	$(call removeFiles,mk/stage1/project.mk)
+	$(call removeFiles,mk/stage2/project.mk)
 	$(call removeFiles,compiler/ghc.cabal)
 	$(call removeFiles,ghc/ghc-bin.cabal)
 	$(call removeFiles,utils/runghc/runghc.cabal)
@@ -1324,8 +1358,10 @@ distclean : clean
 
 # The root Makefile makes .old versions of some files that configure
 # generates, so we clean those too.
-	$(call removeFiles,mk/config.mk.old)
-	$(call removeFiles,mk/project.mk.old)
+	$(call removeFiles,mk/stage1/config.mk.old)
+	$(call removeFiles,mk/stage2/config.mk.old)
+	$(call removeFiles,mk/stage1/project.mk.old)
+	$(call removeFiles,mk/stage2/project.mk.old)
 	$(call removeFiles,compiler/ghc.cabal.old)
 
 # Clean the *Config.h files generated by library configure scripts
@@ -1345,7 +1381,8 @@ distclean : clean
 	$(call removeTrees,bindisttest/a)
 
 # Not sure why this is being cleaned here.
-	$(call removeTrees,includes/dist-derivedconstants)
+	$(call removeTrees,includes/stage1/dist-derivedconstants)
+	$(call removeTrees,includes/stage2/dist-derivedconstants)
 
 # Finally, clean the inplace tree.
 	$(call removeTrees,inplace)
@@ -1367,9 +1404,9 @@ maintainer-clean : distclean
 .PHONY: all_libraries
 
 .PHONY: bootstrapping-files
-bootstrapping-files: $(includes_H_CONFIG)
-bootstrapping-files: $(includes_DERIVEDCONSTANTS)
-bootstrapping-files: $(includes_GHCCONSTANTS)
+bootstrapping-files: $$(includes_H_CONFIG_STAGE1)
+bootstrapping-files: $$(includes_DERIVEDCONSTANTS_STAGE1)
+bootstrapping-files: $$(includes_GHCCONSTANTS_STAGE1)
 bootstrapping-files: $(libffi_HEADERS)
 
 .DELETE_ON_ERROR:
@@ -1422,6 +1459,9 @@ phase_0_builds: $(utils/genprimopcode_dist_depfile_c_asm)
 phase_0_builds: $(utils/deriveConstants_dist_depfile_haskell)
 phase_0_builds: $(utils/deriveConstants_dist_depfile_c_asm)
 
-.PHONY: phase_1_builds
-phase_1_builds: $(PACKAGE_DATA_MKS)
+.PHONY: phase_1_subphase_1_builds
+phase_1_subphase_1_builds: $(GHC_STAGE1) $(ghc-pkg_INPLACE) $(genapply_INPLACE)
+
+.PHONY: phase_1_subphase_2_builds
+phase_1_subphase_2_builds: $(PACKAGE_DATA_MKS)
 

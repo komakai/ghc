@@ -34,18 +34,18 @@ compiler/stage1/package-data.mk : compiler/stage1/build/Config.hs
 compiler/stage2/package-data.mk : compiler/stage2/build/Config.hs
 compiler/stage3/package-data.mk : compiler/stage3/build/Config.hs
 
-compiler/stage1/build/PlatformConstants.o: $(includes_GHCCONSTANTS_HASKELL_TYPE)
-compiler/stage2/build/PlatformConstants.o: $(includes_GHCCONSTANTS_HASKELL_TYPE)
-compiler/stage3/build/PlatformConstants.o: $(includes_GHCCONSTANTS_HASKELL_TYPE)
-compiler/stage1/build/DynFlags.o: $(includes_GHCCONSTANTS_HASKELL_EXPORTS)
-compiler/stage2/build/DynFlags.o: $(includes_GHCCONSTANTS_HASKELL_EXPORTS)
-compiler/stage3/build/DynFlags.o: $(includes_GHCCONSTANTS_HASKELL_EXPORTS)
-compiler/stage1/build/DynFlags.o: $(includes_GHCCONSTANTS_HASKELL_WRAPPERS)
-compiler/stage2/build/DynFlags.o: $(includes_GHCCONSTANTS_HASKELL_WRAPPERS)
-compiler/stage3/build/DynFlags.o: $(includes_GHCCONSTANTS_HASKELL_WRAPPERS)
+compiler/stage1/build/PlatformConstants.o: $$(includes_GHCCONSTANTS_HASKELL_TYPE_STAGE1)
+compiler/stage2/build/PlatformConstants.o: $$(includes_GHCCONSTANTS_HASKELL_TYPE_STAGE2)
+compiler/stage3/build/PlatformConstants.o: $$(includes_GHCCONSTANTS_HASKELL_TYPE_STAGE3)
+compiler/stage1/build/DynFlags.o: $$(includes_GHCCONSTANTS_HASKELL_EXPORTS_STAGE1)
+compiler/stage2/build/DynFlags.o: $$(includes_GHCCONSTANTS_HASKELL_EXPORTS_STAGE2)
+compiler/stage3/build/DynFlags.o: $$(includes_GHCCONSTANTS_HASKELL_EXPORTS_STAGE3)
+compiler/stage1/build/DynFlags.o: $$(includes_GHCCONSTANTS_HASKELL_WRAPPERS_STAGE1)
+compiler/stage2/build/DynFlags.o: $$(includes_GHCCONSTANTS_HASKELL_WRAPPERS_STAGE2)
+compiler/stage3/build/DynFlags.o: $$(includes_GHCCONSTANTS_HASKELL_WRAPPERS_STAGE3)
 endif
 
-compiler/stage%/build/Config.hs : mk/config.mk mk/project.mk | $$(dir $$@)/.
+compiler/stage%/build/Config.hs : mk/stage%/config.mk mk/stage%/project.mk | $$(dir $$@)/.
 	$(call removeFiles,$@)
 	@echo 'Creating $@ ... '
 	@echo '{-# LANGUAGE CPP #-}'                                        >> $@
@@ -147,7 +147,7 @@ endif
 
 PLATFORM_H = ghc_boot_platform.h
 
-compiler/stage1/$(PLATFORM_H) : mk/config.mk mk/project.mk | $$(dir $$@)/.
+compiler/stage1/$(PLATFORM_H) : mk/stage1/config.mk mk/stage1/project.mk | $$(dir $$@)/.
 	$(call removeFiles,$@)
 	@echo "Creating $@..."
 	@echo "#ifndef __PLATFORM_H__"                           >> $@
@@ -193,7 +193,7 @@ endif
 # For stage2 and above, the BUILD platform is the HOST of stage1, and
 # the HOST platform is the TARGET of stage1.  The TARGET remains the same
 # (stage1 is the cross-compiler, not stage2).
-compiler/stage2/$(PLATFORM_H) : mk/config.mk mk/project.mk | $$(dir $$@)/.
+compiler/stage2/$(PLATFORM_H) : mk/stage2/config.mk mk/stage2/project.mk | $$(dir $$@)/.
 	$(call removeFiles,$@)
 	@echo "Creating $@..."
 	@echo "#ifndef __PLATFORM_H__"                            >> $@
@@ -263,13 +263,15 @@ PRIMOP_BITS_STAGE1 = $(addprefix compiler/stage1/build/,$(PRIMOP_BITS_NAMES))
 PRIMOP_BITS_STAGE2 = $(addprefix compiler/stage2/build/,$(PRIMOP_BITS_NAMES))
 PRIMOP_BITS_STAGE3 = $(addprefix compiler/stage3/build/,$(PRIMOP_BITS_NAMES))
 
-compiler_CPP_OPTS += $(addprefix -I,$(GHC_INCLUDE_DIRS))
-compiler_CPP_OPTS += ${GhcCppOpts}
+compiler_CPP_OPTS_STAGE1 += $(addprefix -I,$(GHC_INCLUDE_DIRS_STAGE1))
+compiler_CPP_OPTS_STAGE1 += ${GhcCppOpts}
+compiler_CPP_OPTS_STAGE2 += $(addprefix -I,$(GHC_INCLUDE_DIRS_STAGE2))
+compiler_CPP_OPTS_STAGE2 += ${GhcCppOpts}
 
 define preprocessCompilerFiles
-# $0 = stage
+# $1 = stage
 compiler/stage$1/build/primops.txt: compiler/prelude/primops.txt.pp compiler/stage$1/$$(PLATFORM_H)
-	$$(CPP) $$(RAWCPP_FLAGS) -P $$(compiler_CPP_OPTS) -Icompiler/stage$1 -x c $$< | grep -v '^#pragma GCC' > $$@
+	$$(CPP) $$(RAWCPP_FLAGS) -P $$(compiler_CPP_OPTS_STAGE$1) -DSTAGE=$1 -Icompiler/stage$1 -x c $$< | grep -v '^#pragma GCC' > $$@
 
 compiler/stage$1/build/primop-data-decl.hs-incl: compiler/stage$1/build/primops.txt $$$$(genprimopcode_INPLACE)
 	"$$(genprimopcode_INPLACE)" --data-decl          < $$< > $$@
@@ -332,7 +334,11 @@ compiler_stage2_CONFIGURE_OPTS += --flags=ncg
 endif
 
 ifeq "$(GhcWithInterpreter)" "YES"
+ifeq "$(ConfigureInteractiveEdition)$(InteractiveEdition)" "YES"
+compiler_stage2_CONFIGURE_OPTS += --flags=interactiveghci
+else
 compiler_stage2_CONFIGURE_OPTS += --flags=ghci
+endif
 
 ifeq "$(GhcEnableTablesNextToCode) $(GhcUnregisterised)" "YES NO"
 # Should GHCI be building info tables in the TABLES_NEXT_TO_CODE style
@@ -381,6 +387,9 @@ endif
 compiler/stage2/build/Parser_HC_OPTS += -O0 -fno-ignore-interface-pragmas -fcmm-sink
 compiler/stage3/build/Parser_HC_OPTS += -O0 -fno-ignore-interface-pragmas -fcmm-sink
 
+ifeq "$(UseAssembler)" "NO"
+compiler/main/DriverPipeline_HC_OPTS += -DNO_ASSEMBLER
+endif
 
 ifeq "$(GhcProfiled)" "YES"
 # If we're profiling GHC then we want SCCs.  However, adding -auto-all
@@ -693,17 +702,25 @@ $(compiler_stage1_depfile_haskell) : compiler/stage1/$(PLATFORM_H)
 $(compiler_stage2_depfile_haskell) : compiler/stage2/$(PLATFORM_H)
 $(compiler_stage3_depfile_haskell) : compiler/stage3/$(PLATFORM_H)
 
-COMPILER_INCLUDES_DEPS += $(includes_H_CONFIG)
-COMPILER_INCLUDES_DEPS += $(includes_H_PLATFORM)
-COMPILER_INCLUDES_DEPS += $(includes_GHCCONSTANTS)
-COMPILER_INCLUDES_DEPS += $(includes_GHCCONSTANTS_HASKELL_TYPE)
-COMPILER_INCLUDES_DEPS += $(includes_GHCCONSTANTS_HASKELL_WRAPPERS)
-COMPILER_INCLUDES_DEPS += $(includes_GHCCONSTANTS_HASKELL_EXPORTS)
-COMPILER_INCLUDES_DEPS += $(includes_DERIVEDCONSTANTS)
+COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_H_CONFIG_STAGE1)
+COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_H_PLATFORM_STAGE1)
+COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_GHCCONSTANTS_STAGE1)
+COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_GHCCONSTANTS_HASKELL_TYPE_STAGE1)
+COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_GHCCONSTANTS_HASKELL_WRAPPERS_STAGE1)
+COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_GHCCONSTANTS_HASKELL_EXPORTS_STAGE1)
+COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_DERIVEDCONSTANTS_STAGE1)
 
-$(compiler_stage1_depfile_haskell) : $(COMPILER_INCLUDES_DEPS) $(PRIMOP_BITS_STAGE1)
-$(compiler_stage2_depfile_haskell) : $(COMPILER_INCLUDES_DEPS) $(PRIMOP_BITS_STAGE2)
-$(compiler_stage3_depfile_haskell) : $(COMPILER_INCLUDES_DEPS) $(PRIMOP_BITS_STAGE3)
+COMPILER_INCLUDES_DEPS_STAGE2 += $(includes_H_CONFIG_STAGE2)
+COMPILER_INCLUDES_DEPS_STAGE2 += $(includes_H_PLATFORM_STAGE2)
+COMPILER_INCLUDES_DEPS_STAGE2 += $(includes_GHCCONSTANTS_STAGE2)
+COMPILER_INCLUDES_DEPS_STAGE2 += $(includes_GHCCONSTANTS_HASKELL_TYPE_STAGE2)
+COMPILER_INCLUDES_DEPS_STAGE2 += $(includes_GHCCONSTANTS_HASKELL_WRAPPERS_STAGE2)
+COMPILER_INCLUDES_DEPS_STAGE2 += $(includes_GHCCONSTANTS_HASKELL_EXPORTS_STAGE2)
+COMPILER_INCLUDES_DEPS_STAGE2 += $(includes_DERIVEDCONSTANTS_STAGE2)
+
+$(compiler_stage1_depfile_haskell) : $(COMPILER_INCLUDES_DEPS_STAGE1) $(PRIMOP_BITS_STAGE1)
+$(compiler_stage2_depfile_haskell) : $(COMPILER_INCLUDES_DEPS_STAGE2) $(PRIMOP_BITS_STAGE2)
+$(compiler_stage3_depfile_haskell) : $(COMPILER_INCLUDES_DEPS_STAGE2) $(PRIMOP_BITS_STAGE3)
 
 $(foreach way,$(compiler_stage1_WAYS),\
       compiler/stage1/build/PrimOp.$($(way)_osuf)) : $(PRIMOP_BITS_STAGE1)

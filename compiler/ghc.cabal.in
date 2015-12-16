@@ -40,6 +40,11 @@ Flag stage3
     Default: False
     Manual: True
 
+Flag interactiveghci
+    Description: Build Interactive Edition GHCi support.
+    Default: False
+    Manual: True
+
 Library
     Default-Language: Haskell2010
     Exposed: False
@@ -64,7 +69,7 @@ Library
 
     GHC-Options: -Wall -fno-warn-name-shadowing
 
-    if flag(ghci)
+    if flag(ghci) || flag(interactiveghci)
         Build-Depends: template-haskell
         CPP-Options: -DGHCI
         Include-Dirs: ../rts/dist/build @FFIIncludeDir@
@@ -98,7 +103,7 @@ Library
         UnboxedTuples
         UndecidableInstances
 
-    Include-Dirs: . parser utils
+    Include-Dirs: . parser utils include
 
     if impl( ghc >= 7.9 )
         -- We need to set the package key to ghc (without a version number)
@@ -132,9 +137,7 @@ Library
         ghci
         hsSyn
         iface
-        llvmGen
         main
-        nativeGen
         parser
         prelude
         profiling
@@ -164,18 +167,6 @@ Library
         IdInfo
         Lexeme
         Literal
-        Llvm
-        Llvm.AbsSyn
-        Llvm.MetaData
-        Llvm.PpLlvm
-        Llvm.Types
-        LlvmCodeGen
-        LlvmCodeGen.Base
-        LlvmCodeGen.CodeGen
-        LlvmCodeGen.Data
-        LlvmCodeGen.Ppr
-        LlvmCodeGen.Regs
-        LlvmMangler
         MkId
         Module
         Name
@@ -213,7 +204,6 @@ Library
         CmmUtils
         CmmLayoutStack
         MkGraph
-        PprBase
         PprC
         PprCmm
         PprCmmDecl
@@ -492,12 +482,45 @@ Library
         Vectorise.Env
         Vectorise.Exp
         Vectorise
+        Platform
         Hoopl.Dataflow
         Hoopl
 --        CgInfoTbls used in ghci/DebuggerUtils
 --        CgHeapery  mkVirtHeapOffsets used in ghci
 
-    Exposed-Modules:
+    if flag(ghci)
+        Exposed-Modules:
+            DsMeta
+            Convert
+            ByteCodeAsm
+            ByteCodeGen
+            ByteCodeInstr
+            ByteCodeItbls
+            ByteCodeLink
+            Debugger
+            LibFFI
+            Linker
+            ObjLink
+            RtClosureInspect
+            DebuggerUtils
+
+    if !flag(interactiveghci)
+        hs-source-dirs:
+            llvmGen
+            nativeGen
+        Exposed-Modules:
+            Llvm
+            Llvm.AbsSyn
+            Llvm.MetaData
+            Llvm.PpLlvm
+            Llvm.Types
+            LlvmCodeGen
+            LlvmCodeGen.Base
+            LlvmCodeGen.CodeGen
+            LlvmCodeGen.Data
+            LlvmCodeGen.Ppr
+            LlvmCodeGen.Regs
+            LlvmMangler
             AsmCodeGen
             TargetReg
             NCGMonad
@@ -505,8 +528,8 @@ Library
             Size
             Reg
             RegClass
+            PprBase
             PIC
-            Platform
             CPrim
             X86.Regs
             X86.RegInfo
@@ -562,7 +585,9 @@ Library
             Dwarf.Types
             Dwarf.Constants
 
-    if flag(ghci)
+    if flag(interactiveghci)
+        hs-source-dirs:
+            stubs
         Exposed-Modules:
             DsMeta
             Convert
@@ -577,3 +602,9 @@ Library
             ObjLink
             RtClosureInspect
             DebuggerUtils
+            Reg
+            RegClass
+            CPrim
+            LlvmCodeGen
+            LlvmMangler
+            AsmCodeGen

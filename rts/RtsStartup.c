@@ -314,6 +314,9 @@ static void
 hs_exit_(rtsBool wait_foreign)
 {
     nat g, i;
+#ifdef INTERACTIVE_EDITION
+    wait_foreign = rtsTrue;
+#endif
 
     if (hs_init_count <= 0) {
         errorBelch("warning: too many hs_exit()s");

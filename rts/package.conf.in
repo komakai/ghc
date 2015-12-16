@@ -60,7 +60,14 @@ extra-libraries:
 #ifdef INSTALLING
 include-dirs:           INCLUDE_DIR PAPI_INCLUDE_DIR FFI_INCLUDE_DIR
 #else /* !INSTALLING */
-include-dirs:           TOP"/rts/dist/build" TOP"/includes" TOP"/includes/dist-derivedconstants/header" FFI_INCLUDE_DIR
+#if STAGE==1
+include-dirs:           TOP"/rts/dist/build" TOP"/includes" TOP"/includes/stage1/dist-derivedconstants/header" FFI_INCLUDE_DIR
+#elif STAGE==2
+include-dirs:           TOP"/rts/dist/build" TOP"/includes" TOP"/includes/stage2/dist-derivedconstants/header" FFI_INCLUDE_DIR
+#else
+#error "Invalid STAGE !!!"
+#endif
+
 #endif
 
 includes:               Stg.h

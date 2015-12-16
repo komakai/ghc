@@ -186,8 +186,17 @@ initSysTools mbMinusB
              -- NB: top_dir is assumed to be in standard Unix
              -- format, '/' separated
 
-       let settingsFile = top_dir </> "settings"
-           platformConstantsFile = top_dir </> "platformConstants"
+       let
+#if STAGE==1
+           settingsFile = top_dir </> "settings.stage1"
+           platformConstantsFile = top_dir </> "platformConstants.stage1"
+#elif STAGE==2 || STAGE==3
+           settingsFile = top_dir </> "settings.stage2"
+           platformConstantsFile = top_dir </> "platformConstants.stage2"
+#else
+#error "Invalid STAGE !!!"
+#endif
+
            installed :: FilePath -> FilePath
            installed file = top_dir </> file
 
@@ -797,17 +806,28 @@ getLinkerInfo' dflags = do
         | any ("GNU ld" `isPrefixOf`) stdo =
           -- GNU ld specifically needs to use less memory. This especially
           -- hurts on small object files. Trac #5240.
-          -- Set DT_NEEDED for all shared libraries. Trac #10110.
-          return (GnuLD $ map Option ["-Wl,--hash-size=31",
-                                      "-Wl,--reduce-memory-overheads",
-                                      -- ELF specific flag
-                                      -- see Note [ELF needed shared libs]
-                                      "-Wl,--no-as-needed"])
+          --
+          -- komakai: if anybody needs these then they should set them via the
+          -- komakai: CFLAGS and LDFLAGS. Harding code flags like this makes the
+          -- komakai: build extremely fragile.
+          --
+          -- return (GnuLD $ map Option ["-Wl,--hash-size=31",
+          --                            "-Wl,--reduce-memory-overheads",
+          --                            -- ELF specific flag
+          --                            -- see Note [ELF needed shared libs]
+          --                            "-Wl,--no-as-needed"])
+             return (GnuLD [])
 
         | any ("GNU gold" `isPrefixOf`) stdo =
           -- GNU gold only needs --no-as-needed. Trac #10110.
           -- ELF specific flag, see Note [ELF needed shared libs]
-          return (GnuGold [Option "-Wl,--no-as-needed"])
+          --
+          -- komakai: if anybody needs these then they should set them via the
+          -- komakai: CFLAGS and LDFLAGS. Harding code flags like this makes the
+          -- komakai: build extremely fragile.
+          --
+          -- return (GnuGold [Option "-Wl,--no-as-needed"])
+             return (GnuGold [])
 
          -- Unknown linker.
         | otherwise = fail "invalid --version output, or linker is unsupported"

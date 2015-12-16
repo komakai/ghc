@@ -42,7 +42,7 @@ Haskell side.
 #include "RtsUtils.h"
 #include "Stable.h"
 
-#if defined(USE_LIBFFI_FOR_ADJUSTORS)
+#if defined(USE_LIBFFI_FOR_ADJUSTORS) && !defined(INTERACTIVE_EDITION)
 #include "ffi.h"
 #include <string.h>
 #endif
@@ -56,7 +56,18 @@ extern void adjustorCode(void);
 extern void *adjustorCode;
 #endif
 
-#if defined(USE_LIBFFI_FOR_ADJUSTORS)
+#if defined(INTERACTIVE_EDITION)
+
+void freeHaskellFunctionPtr(void* ptr)
+{
+}
+
+void* createAdjustor (int cconv, StgStablePtr hptr, StgFunPtr wptr, char *typeString)
+{
+    return NULL;
+}
+
+#elif defined(USE_LIBFFI_FOR_ADJUSTORS)
 /* There are subtle differences between how libffi adjustors work on
  * different platforms, and the situation is a little complex.
  * 

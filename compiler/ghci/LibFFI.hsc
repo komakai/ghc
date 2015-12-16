@@ -6,7 +6,9 @@
 --
 -----------------------------------------------------------------------------
 
+#ifndef INTERACTIVE_EDITION
 #include <ffi.h>
+#endif
 
 module LibFFI (
   ForeignCallToken,
@@ -25,6 +27,23 @@ import Foreign.C
 ----------------------------------------------------------------------------
 
 type ForeignCallToken = C_ffi_cif
+
+#ifdef INTERACTIVE_EDITION
+
+prepForeignCall
+    :: DynFlags
+    -> CCallConv
+    -> [PrimRep]                        -- arg types
+    -> PrimRep                          -- result type
+    -> IO (Ptr ForeignCallToken)        -- token for making calls
+                                        -- (must be freed by caller)
+prepForeignCall dflags cconv arg_types result_type
+  = do
+     throwGhcExceptionIO (InstallationError ("Foreign Calls disabled"))
+
+data C_ffi_cif
+
+#else
 
 prepForeignCall
     :: DynFlags
@@ -136,3 +155,6 @@ foreign import ccall "ffi_prep_cif"
 --            -> Ptr ()                    -- put result here
 --            -> Ptr (Ptr ())              -- arg values
 --            -> IO ()
+
+#endif
+

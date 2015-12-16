@@ -58,6 +58,7 @@ $1_$2_$3_ALL_OBJS = $$($1_$2_$3_HS_OBJS) $$($1_$2_$3_NON_HS_OBJS)
 
 ifeq "$3" "dyn"
 
+ifneq "$$(InteractiveEdition)" "YES"
 ifneq "$$($1_$2_dll0_MODULES)" ""
 $$($1_$2_$3_LIB)  : $1/$2/dll-split.stamp
 ifneq "$$($1_$2_$3_LIB0)" ""
@@ -68,6 +69,7 @@ endif
 $1/$2/dll-split.stamp: $$($1_$2_depfile_haskell) $$$$(dll-split_INPLACE)
 	$$(dll-split_INPLACE) $$< "$$($1_$2_dll0_START_MODULE)" "$$($1_$2_dll0_MODULES)"
 	touch $$@
+endif
 
 # Link a dynamic library
 # On windows we have to supply the extra libs this one links to when building it.
@@ -120,6 +122,11 @@ endif
 endif
 
 endif
+
+ifeq "$4" "1"
+$3_ALL_OBJS += $$($1_$2_$3_ALL_OBJS)
+endif
+$3_ALL_DEPS += $$($1_$2_$3_LIB)
 
 $(call all-target,$1_$2,all_$1_$2_$3)
 $(call all-target,$1_$2_$3,$$($1_$2_$3_LIB))

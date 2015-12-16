@@ -19,11 +19,11 @@ bootstrap_target=@TargetPlatform@
 FPTOOLS_SET_PLATFORM_VARS
 
 # ToDo: if Stage1Only=YES, should be YES
-CrossCompiling=NO
+BuildingCrossCompiler=NO
 CrossCompilePrefix=""
 TargetPlatformFull="${target}"
 
-AC_SUBST(CrossCompiling)
+AC_SUBST(BuildingCrossCompiler)
 AC_SUBST(CrossCompilePrefix)
 AC_SUBST(TargetPlatformFull)
 

@@ -1165,11 +1165,15 @@ linkPackage dflags pkg
 -- loadDLL is going to search the system paths to find the library.
 --
 load_dyn :: FilePath -> IO ()
+#ifdef INTERACTIVE_EDITION
+load_dyn dll = return ()
+#else
 load_dyn dll = do r <- loadDLL dll
                   case r of
                     Nothing  -> return ()
                     Just err -> throwGhcExceptionIO (CmdLineError ("can't load .so/.DLL for: "
                                                               ++ dll ++ " (" ++ err ++ ")" ))
+#endif
 
 loadFrameworks :: Platform -> PackageConfig -> IO ()
 loadFrameworks platform pkg
@@ -1193,6 +1197,9 @@ loadFrameworks platform pkg
 
 locateLib :: DynFlags -> Bool -> [FilePath] -> String -> IO LibrarySpec
 locateLib dflags is_hs dirs lib
+#ifdef INTERACTIVE_EDITION
+  = return (DLL lib)
+#else
   | not is_hs
     -- For non-Haskell libraries (e.g. gmp, iconv):
     --   first look in library-dirs for a dynamic library (libfoo.so)
@@ -1245,6 +1252,7 @@ locateLib dflags is_hs dirs lib
      platform = targetPlatform dflags
      arch = platformArch platform
      os = platformOS platform
+#endif
 
 searchForLibUsingGcc :: DynFlags -> String -> [FilePath] -> IO (Maybe FilePath)
 searchForLibUsingGcc dflags so dirs = do

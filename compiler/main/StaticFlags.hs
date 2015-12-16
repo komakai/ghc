@@ -15,6 +15,7 @@
 
 module StaticFlags (
         -- entry point
+        resetStaticFlags,
         parseStaticFlags,
 
         staticFlags,
@@ -50,6 +51,10 @@ import Control.Monad
 import Data.IORef
 import System.IO.Unsafe ( unsafePerformIO )
 
+resetStaticFlags :: IO ()
+resetStaticFlags = do
+  writeIORef v_opt_C []
+  writeIORef v_opt_C_ready False
 
 -----------------------------------------------------------------------------
 -- Static flags

@@ -414,15 +414,16 @@ AC_SUBST([SplitObjsBroken])
 
 dnl ** Building a cross compiler?
 dnl --------------------------------------------------------------
-CrossCompiling=NO
+BuildingCrossCompiler=NO
 # If 'host' and 'target' differ, then this means we are building a cross-compiler.
 if test "$target" != "$host" ; then
-    CrossCompiling=YES
-    cross_compiling=yes   # This tells configure that it can accept just 'target',
-                          # otherwise you get
-                          #   configure: error: cannot run C compiled programs.
-                          #   If you meant to cross compile, use `--host'.
+    BuildingCrossCompiler=YES
+    building_cross_compiler=yes   # This tells configure that it can accept just 'target',
+                                  # otherwise you get
+                                  #   configure: error: cannot run C compiled programs.
+                                  #   If you meant to cross compile, use `--host'.
 fi
+CrossCompiling=NO
 if test "$build" != "$host" ; then
    AC_MSG_NOTICE([
 You've selected:
@@ -433,16 +434,19 @@ You've selected:
 
 Cross-compiling!
 ])
+    CrossCompiling=YES
+    cross_compiling=yes
 fi
-if test "$CrossCompiling" = "YES"
+if test "$BuildingCrossCompiler" = "YES"
 then
   CrossCompilePrefix="${target}-"
 else
   CrossCompilePrefix=""
 fi
 TargetPlatformFull="${target}"
-AC_SUBST(CrossCompiling)
+AC_SUBST(BuildingCrossCompiler)
 AC_SUBST(CrossCompilePrefix)
+AC_SUBST(CrossCompiling)
 AC_SUBST(TargetPlatformFull)
 
 dnl ** Which gcc to use?
@@ -680,6 +684,19 @@ FPTOOLS_SET_C_LD_FLAGS([build],[CONF_CC_OPTS_STAGE0],[CONF_GCC_LINKER_OPTS_STAGE
 FPTOOLS_SET_C_LD_FLAGS([target],[CONF_CC_OPTS_STAGE1],[CONF_GCC_LINKER_OPTS_STAGE1],[CONF_LD_LINKER_OPTS_STAGE1],[CONF_CPP_OPTS_STAGE1])
 FPTOOLS_SET_C_LD_FLAGS([target],[CONF_CC_OPTS_STAGE2],[CONF_GCC_LINKER_OPTS_STAGE2],[CONF_LD_LINKER_OPTS_STAGE2],[CONF_CPP_OPTS_STAGE2])
 # Stage 3 won't be supported by cross-compilation
+
+CONF_CC_OPTS_STAGE0="$CONF_CC_OPTS_STAGE0 $CFLAGS"
+CONF_CC_OPTS_STAGE1="$CONF_CC_OPTS_STAGE1 $CFLAGS"
+CONF_CC_OPTS_STAGE2="$CONF_CC_OPTS_STAGE2 $CFLAGS"
+CONF_GCC_LINKER_OPTS_STAGE0="$CONF_GCC_LINKER_OPTS_STAGE0 $LDFLAGS"
+CONF_GCC_LINKER_OPTS_STAGE1="$CONF_GCC_LINKER_OPTS_STAGE1 $LDFLAGS"
+CONF_GCC_LINKER_OPTS_STAGE2="$CONF_GCC_LINKER_OPTS_STAGE2 $LDFLAGS"
+CONF_LD_LINKER_OPTS_STAGE0="$CONF_LD_LINKER_OPTS_STAGE0 $LDFLAGS"
+CONF_LD_LINKER_OPTS_STAGE1="$CONF_LD_LINKER_OPTS_STAGE1 $LDFLAGS"
+CONF_LD_LINKER_OPTS_STAGE2="$CONF_LD_LINKER_OPTS_STAGE2 $LDFLAGS"
+CONF_CPP_OPTS_STAGE0="$CONF_CPP_OPTS_STAGE0 $CPPFLAGS"
+CONF_CPP_OPTS_STAGE1="$CONF_CPP_OPTS_STAGE1 $CPPFLAGS"
+CONF_CPP_OPTS_STAGE2="$CONF_CPP_OPTS_STAGE2 $CPPFLAGS"
 
 FP_GCC_EXTRA_FLAGS
 
@@ -1087,6 +1104,41 @@ checkMake380() {
 checkMake380 make
 checkMake380 gmake
 
+AC_SUBST(STAGE)
+if test "$STAGE" = "1" || test "$STAGE" = "2"; then :
+  echo "
+----------------------------------------------------------------------
+Copying config.h, config.mk, project.mk files to stage$STAGE sub-directory
+----------------------------------------------------------------------
+"
+  mkdir -p mk/stage$STAGE
+  mv mk/config.h mk/stage$STAGE
+  mv mk/config.mk mk/stage$STAGE
+  sed -i -e "s/stage\/project.mk/stage$STAGE\/project.mk/g" mk/stage$STAGE/config.mk
+  mv mk/project.mk mk/stage$STAGE
+  mv settings settings.stage$STAGE
+else
+  echo "
+----------------------------------------------------------------------
+Copying config.h, config.mk, project.mk files to stage1/stage2 sub-directories
+----------------------------------------------------------------------
+"
+  mkdir -p mk/stage1
+  cp mk/config.h mk/stage1
+  cp mk/config.mk mk/stage1
+  sed -i -e "s/stage\/project.mk/stage1\/project.mk/g" mk/stage1/config.mk
+  sed -i -e "s/DSTAGE=/DSTAGE=1/g" mk/stage1/config.mk
+  cp mk/project.mk mk/stage1
+  cp settings settings.stage1
+  mkdir -p mk/stage2
+  mv mk/config.h mk/stage2
+  mv mk/config.mk mk/stage2
+  sed -i -e "s/stage\/project.mk/stage2\/project.mk/g" mk/stage2/config.mk
+  sed -i -e "s/DSTAGE=/DSTAGE=2/g" mk/stage2/config.mk
+  mv mk/project.mk mk/stage2
+  mv settings settings.stage2
+fi
+
 echo ["
 ----------------------------------------------------------------------
 Configure completed successfully.
@@ -1117,7 +1169,7 @@ fi
 echo ["\
    Using $CompilerName       : $WhatGccIsCalled
       which is version       : $GccVersion
-   Building a cross compiler : $CrossCompiling
+   Building a cross compiler : $BuildingCrossCompiler
    cpp       : $HaskellCPPCmd
    cpp-flags : $HaskellCPPArgs
    ld        : $LdCmd

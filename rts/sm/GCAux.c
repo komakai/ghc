@@ -112,20 +112,33 @@ isAlive(StgClosure *p)
    Reverting CAFs
    -------------------------------------------------------------------------- */
 
-void
-revertCAFs( void )
+static void revertCAFList(StgIndStatic** cafList)
 {
     StgIndStatic *c;
-
-    for (c = revertible_caf_list;
+ 
+    for (c = *cafList;
          c != (StgIndStatic *)END_OF_STATIC_LIST;
          c = (StgIndStatic *)c->static_link)
     {
         SET_INFO((StgClosure *)c, c->saved_info);
         c->saved_info = NULL;
-        // could, but not necessary: c->static_link = NULL;
+        // could, but not necessary: c->static_link = NULL; 
     }
-    revertible_caf_list = (StgIndStatic*)END_OF_STATIC_LIST;
+    *cafList = (StgIndStatic *)END_OF_STATIC_LIST;
+}
+
+void
+revertCAFs( void )
+{
+    revertCAFList((StgIndStatic**)&revertible_caf_list);
+}
+
+void
+revertAllCAFs( void )
+{
+    revertCAFList((StgIndStatic**)&revertible_caf_list);
+    revertCAFList((StgIndStatic**)&dyn_caf_list);
+    revertCAFList((StgIndStatic**)&debug_caf_list);
 }
 
 void

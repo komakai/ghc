@@ -10,6 +10,101 @@
 #include "PosixSource.h"
 #endif
 
+#ifdef INTERACTIVE_EDITION
+
+/* Linux needs _GNU_SOURCE to get RTLD_DEFAULT from <dlfcn.h> and
+   MREMAP_MAYMOVE from <sys/mman.h>.
+ */
+#if defined(__linux__)  || defined(__GLIBC__)
+#define _GNU_SOURCE 1
+#endif
+
+#include "Rts.h"
+#include "LinkerInternals.h"
+
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+
+#if defined(HAVE_DLFCN_H)
+#include <dlfcn.h>
+#endif
+
+static void *dl_prog_handle;
+static int linker_init_done = 0 ;
+ObjectCode *unloaded_objects = NULL; /* initially empty */
+
+/* initialize the object linker */
+void initLinker( void )
+{
+       if (!linker_init_done) {
+               dl_prog_handle = dlopen(NULL, RTLD_NOW|RTLD_GLOBAL);
+               linker_init_done = 1;
+       }
+}
+
+/* insert a stable symbol in the hash table */
+void insertStableSymbol(char* obj_name, char* key, StgPtr data)
+{
+}
+
+/* insert a symbol in the hash table */
+HsInt insertSymbol(pathchar* obj_name, char* key, void* data)
+{
+}
+
+#ifndef USE_FIXUPS
+/* lookup a symbol in the hash table */
+void *lookupSymbol( char *lbl )
+{
+       return dlsym(dl_prog_handle, lbl);
+}
+#endif
+
+/* delete an object from the pool */
+HsInt unloadObj( char *path )
+{
+       return 1;
+}
+
+/* add an obj (populate the global symbol table, but don't resolve yet) */
+HsInt loadObj( char *path )
+{
+       return 1;
+}
+
+/* add an arch (populate the global symbol table, but don't resolve yet) */
+HsInt loadArchive( char *path )
+{
+       return 1;
+}
+
+/* resolve all the currently unlinked objects in memory */
+HsInt resolveObjs( void )
+{
+       return 1;
+}
+
+/* load a dynamic library */
+const char *addDLL( char* dll_name )
+{
+       return NULL;
+}
+
+void exitLinker( void ) {
+}
+
+StgStablePtr foreignExportStablePtr (StgPtr p)
+{
+    return getStablePtr(p);
+}
+
+void freeObjectCode (ObjectCode *oc)
+{
+}
+
+#else
+
 /* Linux needs _GNU_SOURCE to get RTLD_DEFAULT from <dlfcn.h> and
    MREMAP_MAYMOVE from <sys/mman.h>.
  */
@@ -7447,3 +7542,6 @@ machoGetMisalignment( FILE * f )
 #endif
 
 #endif
+
+#endif
+

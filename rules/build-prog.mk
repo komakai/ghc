@@ -45,8 +45,18 @@ $(call clean-target,$1,$2,$1/$2)
 $$(eval $$(call build-prog-vars,$1,$2,$3))
 
 ifneq "$$($1_$2_NOT_NEEDED)" "YES"
+ifneq "$(InteractiveEdition)$(target_stage)" "YES2"
 $$(eval $$(call build-prog-helper,$1,$2,$3))
+ifeq "$3" "0"
+$1_$2_HC_OPTS += -DSTAGE=1 -optc-DSTAGE=1
+else ifeq "$3" "1"
+$1_$2_HC_OPTS += -DSTAGE=2 -optc-DSTAGE=2
+else ifeq "$3" "2"
+$1_$2_HC_OPTS += -DSTAGE=2 -optc-DSTAGE=2
 endif
+endif
+endif
+
 $(call profEnd, build-prog($1,$2,$3))
 endef
 
@@ -137,13 +147,15 @@ $(call shell-wrapper,$1,$2)
 ifeq "$$($1_$2_PROGRAM_WAY)" ""
 ifeq "$3" "0"
 $1_$2_PROGRAM_WAY = v
-else ifeq "$$(DYNAMIC_GHC_PROGRAMS)" "YES"
+else
+ifeq "$$(DYNAMIC_GHC_PROGRAMS)" "YES"
 $1_$2_PROGRAM_WAY = dyn
+else
+$1_$2_PROGRAM_WAY = v
+endif
 ifeq "$$(GhcUnregisterised)" "YES"
 $1_$2_HC_OPTS += -fvia-c
 endif
-else
-$1_$2_PROGRAM_WAY = v
 endif
 endif
 

@@ -27,6 +27,8 @@ initGCStatistics(void)
   }
 }
 
+#ifndef INTERACTIVE_EDITION
+
 void
 defaultsHook (void)
 {
@@ -53,4 +55,6 @@ StackOverflowHook (StgWord stack_size)    /* in bytes */
 {
     fprintf(stderr, "GHC stack-space overflow: current limit is %zu bytes.\nUse the `-K<size>' option to increase it.\n", (size_t)stack_size);
 }
+
+#endif
 
