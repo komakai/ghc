@@ -1,0 +1,41 @@
+#!/bin/bash
+args=( "$@" )
+usegcc=yes
+if [[ $# -eq 1 ]] && [[ $1 =~ ^@ ]]
+then
+  readarray a < <( cat ${1#?} | sed 's/\(^"\|"$\)//g' )
+  set -- ${a[*]}
+fi
+
+if [[ $1 == --version ]] || [[ $1 == -Wl,--version ]]
+then
+  exec "/usr/bin/ld" --version
+  exit 0
+fi
+if [[ $1 == -v ]] || [[ $1 == -Wl,-v ]]
+then
+  exec "/usr/bin/ld" -v
+  exit 0
+fi
+if [[ $1 == --help ]] || [[ $1 == -Wl,--help ]]
+then
+  exec "/usr/bin/ld" --help
+  exit 0
+fi
+
+while (( "$#" ));
+do
+  if [[ $1 == -r ]]
+  then
+    usegcc=no
+    break
+  fi
+  shift
+done
+
+if [ "$usegcc" == "yes" ];
+then
+  exec "/usr/bin/gcc32" "${args[@]}"
+else
+  exec "/usr/bin/ld" -melf_i386 "$@"
+fi
