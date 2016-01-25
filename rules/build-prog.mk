@@ -44,8 +44,13 @@ $(call clean-target,$1,$2,$1/$2)
 
 $$(eval $$(call build-prog-vars,$1,$2,$3))
 
+ifeq "$(InteractiveEdition)$(target_stage)" "YES2"
+ifneq "$1" "ghc"
+$1_$2_NOT_NEEDED = YES
+endif
+endif
+
 ifneq "$$($1_$2_NOT_NEEDED)" "YES"
-ifneq "$(InteractiveEdition)$(target_stage)" "YES2"
 $$(eval $$(call build-prog-helper,$1,$2,$3))
 ifeq "$3" "0"
 $1_$2_HC_OPTS += -DSTAGE=1 -optc-DSTAGE=1
@@ -53,7 +58,6 @@ else ifeq "$3" "1"
 $1_$2_HC_OPTS += -DSTAGE=2 -optc-DSTAGE=2
 else ifeq "$3" "2"
 $1_$2_HC_OPTS += -DSTAGE=2 -optc-DSTAGE=2
-endif
 endif
 endif
 

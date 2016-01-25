@@ -104,7 +104,9 @@ _darcs/
 /driver/package.conf.inplace.old
 /settings.*
 /ghc.spec
-/ghc/ghc-bin.cabal
+/ghc/ghc.cabal
+/ghc/ghc-bin.cxbxl
+/ghc/ghc-lib.cxbxl
 /ghc/linkall/
 /includes/stage1/
 /includes/stage2/

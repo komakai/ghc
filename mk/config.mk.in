@@ -569,28 +569,34 @@ endif
 endif
 
 ifeq "$(phase)" "final"
+ifeq "$(filter -DBUILD_GHC_AS_LIB,$(CONF_CC_OPTS_STAGE2))" "-DBUILD_GHC_AS_LIB"
+GhcLib = YES
+endif
+ifeq "$(filter -DNATIVE_INPUT,$(CONF_CC_OPTS_STAGE2))" "-DNATIVE_INPUT"
+NativeInput = YES
+endif
 ifeq "$(filter -DANDROID,$(CONF_CC_OPTS_STAGE2))" "-DANDROID"
 Android = YES
-NoExe = YES
 else ifeq "$(filter -DIOS_SIM,$(CONF_CC_OPTS_STAGE2))" "-DIOS_SIM"
 IosSim = YES
-NoExe = YES
 else ifeq "$(filter -DIOS_DEVICE,$(CONF_CC_OPTS_STAGE2))" "-DIOS_DEVICE"
 IosDev = YES
-NoExe = YES
 endif
 endif
 
 ifeq "$(phase)" "1"
+ifeq "$(filter -DBUILD_GHC_AS_LIB,$(CONF_CC_OPTS_STAGE2))" "-DBUILD_GHC_AS_LIB"
+ConfigureGhcLib = YES
+endif
+ifeq "$(filter -DNATIVE_INPUT,$(CONF_CC_OPTS_STAGE2))" "-DNATIVE_INPUT"
+ConfigureNativeInput = YES
+endif
 ifeq "$(filter -DANDROID,$(CONF_CC_OPTS_STAGE2))" "-DANDROID"
 ConfigureAndroid = YES
-NoExe = YES
 else ifeq "$(filter -DIOS_SIM,$(CONF_CC_OPTS_STAGE2))" "-DIOS_SIM"
 ConfigureIosSim = YES
-NoExe = YES
 else ifeq "$(filter -DIOS_DEVICE,$(CONF_CC_OPTS_STAGE2))" "-DIOS_DEVICE"
 ConfigureIosDev = YES
-NoExe = YES
 endif
 endif
 

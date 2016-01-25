@@ -187,14 +187,18 @@ initSysTools mbMinusB
              -- format, '/' separated
 
        let
-#if STAGE==1
+#if STAGE==0
            settingsFile = top_dir </> "settings.stage1"
-           platformConstantsFile = top_dir </> "platformConstants.stage1"
-#elif STAGE==2 || STAGE==3
+#elif STAGE==1 || STAGE==2 || STAGE==3
            settingsFile = top_dir </> "settings.stage2"
-           platformConstantsFile = top_dir </> "platformConstants.stage2"
 #else
 #error "Invalid STAGE !!!"
+#endif
+
+#if STAGE==1
+           platformConstantsFile = top_dir </> "platformConstants.stage1"
+#elif STAGE==2 || STAGE==3
+           platformConstantsFile = top_dir </> "platformConstants.stage2"
 #endif
 
            installed :: FilePath -> FilePath
@@ -243,6 +247,7 @@ initSysTools mbMinusB
        targetHasGnuNonexecStack <- readSetting "target has GNU nonexec stack"
        targetHasIdentDirective <- readSetting "target has .ident directive"
        targetHasSubsectionsViaSymbols <- readSetting "target has subsections via symbols"
+       targetSupportsSectionType <- readSetting "target supports .section directive type parameter"
        myExtraGccViaCFlags <- getSetting "GCC extra via C opts"
        -- On Windows, mingw is distributed with GHC,
        -- so we look in TopDir/../mingw/bin
@@ -326,6 +331,7 @@ initSysTools mbMinusB
                           platformHasGnuNonexecStack = targetHasGnuNonexecStack,
                           platformHasIdentDirective = targetHasIdentDirective,
                           platformHasSubsectionsViaSymbols = targetHasSubsectionsViaSymbols,
+                          platformHasSectionTypeParam = targetSupportsSectionType,
                           platformIsCrossCompiling = crossCompiling
                       }
 

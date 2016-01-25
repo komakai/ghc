@@ -1705,8 +1705,10 @@ mkNoteObjsToLinkIntoBinary dflags dep_packages = do
   where
     link_opts info = hcat [
           text "\t.section ", text ghcLinkInfoSectionName,
-                                   text ",\"\",",
-                                   text elfSectionNote,
+                                   text ",\"\"",
+                                   (if platformHasSectionTypeParam (targetPlatform dflags)
+                                    then hcat [ text ",", text elfSectionNote ]
+                                    else Outputable.empty),
                                    text "\n",
 
           text "\t.ascii \"", info', text "\"\n",
@@ -1715,7 +1717,7 @@ mkNoteObjsToLinkIntoBinary dflags dep_packages = do
           -- executable stacks.  See also
           -- compiler/nativeGen/AsmCodeGen.lhs for another instance
           -- where we need to do this.
-          (if platformHasGnuNonexecStack (targetPlatform dflags)
+          (if platformHasGnuNonexecStack (targetPlatform dflags) && platformHasSectionTypeParam (targetPlatform dflags)
            then text ".section .note.GNU-stack,\"\",@progbits\n"
            else Outputable.empty)
 

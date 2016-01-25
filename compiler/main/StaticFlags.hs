@@ -15,7 +15,9 @@
 
 module StaticFlags (
         -- entry point
+#ifdef INTERACTIVE_EDITION
         resetStaticFlags,
+#endif
         parseStaticFlags,
 
         staticFlags,
@@ -51,10 +53,12 @@ import Control.Monad
 import Data.IORef
 import System.IO.Unsafe ( unsafePerformIO )
 
+#ifdef INTERACTIVE_EDITION
 resetStaticFlags :: IO ()
 resetStaticFlags = do
   writeIORef v_opt_C []
   writeIORef v_opt_C_ready False
+#endif
 
 -----------------------------------------------------------------------------
 -- Static flags

@@ -308,6 +308,16 @@ AC_DEFUN([FPTOOLS_SET_HASKELL_PLATFORM_VARS],
         [AC_MSG_RESULT(no)
          HaskellHaveIdentDirective=False])
 
+    dnl *** check for .section directive type parameter support
+    dnl     (.section .test,"",@{type})
+    AC_MSG_CHECKING(for .section directive type parameter support)
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([__asm__ (".section .test,\"\",@note");], [0])],
+        [AC_MSG_RESULT(yes)
+         HaskellSectionTypeParam=True],
+        [AC_MSG_RESULT(no)
+         HaskellSectionTypeParam=False])
+
     dnl *** check for GNU non-executable stack note support (ELF only)
     dnl     (.section .note.GNU-stack,"",@progbits)
 
@@ -341,6 +351,7 @@ AC_DEFUN([FPTOOLS_SET_HASKELL_PLATFORM_VARS],
     AC_SUBST(HaskellTargetOs)
     AC_SUBST(HaskellHaveSubsectionsViaSymbols)
     AC_SUBST(HaskellHaveIdentDirective)
+    AC_SUBST(HaskellSectionTypeParam)
     AC_SUBST(HaskellHaveGnuNonexecStack)
 ])
 

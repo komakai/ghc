@@ -1,7 +1,7 @@
 -- WARNING: ghc-bin.cabal is automatically generated from ghc-bin.cabal.in by
 -- ./configure.  Make sure you are editing ghc-bin.cabal.in, not ghc-bin.cabal.
 
-Name: ghc-bin
+Name: ghc-lib
 Version: @ProjectVersion@
 Copyright: XXX
 -- License: XXX
@@ -23,7 +23,17 @@ Flag ghci
     Default: False
     Manual: True
 
-Executable ghc
+Flag interactiveghci
+    Description: Build Interactive Edition support.
+    Default: False
+    Manual: True
+
+Flag androidnativeinput
+    Description: Build Android native input.
+    Default: False
+    Manual: True
+
+library
     Default-Language: Haskell2010
 
     Main-Is: Main.hs
@@ -40,6 +50,7 @@ Executable ghc
         Build-Depends: unix
 
     C-Sources: hschooks.c
+    Include-Dirs: ..
 
     GHC-Options: -Wall
     if flag(ghci)
@@ -57,6 +68,28 @@ Executable ghc
             TupleSections
             UnboxedTuples
 
+    if flag(interactiveghci)
+        Build-depends: deepseq >= 1.4 && < 1.5
+        CPP-Options: -DGHCI
+        GHC-Options: -fno-warn-name-shadowing
+        Other-Modules:
+            InteractiveUI
+            GhciMonad
+            InteractiveStubs
+        C-Sources: io.c
+        Build-Depends: transformers
+        Other-Extensions:
+            FlexibleInstances
+            MagicHash
+            TupleSections
+            UnboxedTuples
+
+    if flag(androidnativeinput)
+        C-Sources: nativeint/android/haskell-android-int.c
+                   nativeint/nativeint.c
+        Include-Dirs: nativeint, nativeint/android
+
     Other-Extensions:
         CPP
         NondecreasingIndentation
+

@@ -107,6 +107,9 @@
 /* Define to 1 if you have the `getclock' function. */
 #undef HAVE_GETCLOCK
 
+/* Define to 1 if you have the `getline' function. */
+#undef HAVE_GETLINE
+
 /* Define to 1 if you have the `GetModuleFileName' function. */
 #undef HAVE_GETMODULEFILENAME
 

@@ -23,7 +23,9 @@ module InteractiveUI (
 -- GHCi
 import qualified GhciMonad ( args, runStmt )
 import GhciMonad hiding ( args, runStmt )
+#ifndef INTERACTIVE_EDITION
 import GhciTags
+#endif
 import Debugger
 
 -- The GHC interface
@@ -61,7 +63,11 @@ import Panic hiding ( showException )
 import Util
 
 -- Haskell Libraries
+#ifdef INTERACTIVE_EDITION
+import InteractiveStubs
+#else
 import System.Console.Haskeline as Haskeline
+#endif
 
 import Control.Applicative hiding (empty)
 import Control.DeepSeq (deepseq)
@@ -99,7 +105,9 @@ import Text.Printf
 import Text.Read ( readMaybe )
 
 #ifndef mingw32_HOST_OS
+#ifndef INTERACTIVE_EDITION
 import System.Posix hiding ( getEnv )
+#endif
 #else
 import qualified System.Win32
 #endif
@@ -112,21 +120,29 @@ import GHC.TopHandler ( topHandler )
 -----------------------------------------------------------------------------
 
 data GhciSettings = GhciSettings {
+#ifdef INTERACTIVE_EDITION
+        availableCommands :: [Command]
+#else
         availableCommands :: [Command],
         shortHelpText     :: String,
         fullHelpText      :: String,
         defPrompt         :: String,
         defPrompt2        :: String
+#endif
     }
 
 defaultGhciSettings :: GhciSettings
 defaultGhciSettings =
     GhciSettings {
+#ifdef INTERACTIVE_EDITION
+        availableCommands = ghciCommands
+#else
         availableCommands = ghciCommands,
         shortHelpText     = defShortHelpText,
         fullHelpText      = defFullHelpText,
         defPrompt         = default_prompt,
         defPrompt2        = default_prompt2
+#endif
     }
 
 ghciWelcomeMsg :: String
@@ -136,33 +152,47 @@ ghciWelcomeMsg = "GHCi, version " ++ cProjectVersion ++
 cmdName :: Command -> String
 cmdName (n,_,_) = n
 
+#ifndef INTERACTIVE_EDITION
 GLOBAL_VAR(macros_ref, [], [Command])
+#endif
 
 ghciCommands :: [Command]
 ghciCommands = [
   -- Hugs users are accustomed to :e, so make sure it doesn't overlap
+#ifndef INTERACTIVE_EDITION
   ("?",         keepGoing help,                 noCompletion),
+#endif
   ("add",       keepGoingPaths addModule,       completeFilename),
   ("abandon",   keepGoing abandonCmd,           noCompletion),
   ("break",     keepGoing breakCmd,             completeIdentifier),
   ("back",      keepGoing backCmd,              noCompletion),
   ("browse",    keepGoing' (browseCmd False),   completeModule),
   ("browse!",   keepGoing' (browseCmd True),    completeModule),
+#ifndef INTERACTIVE_EDITION
   ("cd",        keepGoing' changeDirectory,     completeFilename),
+#endif
   ("check",     keepGoing' checkModule,         completeHomeModule),
   ("continue",  keepGoing continueCmd,          noCompletion),
+#ifndef INTERACTIVE_EDITION
   ("complete",  keepGoing completeCmd,          noCompletion),
+#endif
   ("cmd",       keepGoing cmdCmd,               completeExpression),
+#ifndef INTERACTIVE_EDITION
   ("ctags",     keepGoing createCTagsWithLineNumbersCmd, completeFilename),
   ("ctags!",    keepGoing createCTagsWithRegExesCmd, completeFilename),
   ("def",       keepGoing (defineMacro False),  completeExpression),
   ("def!",      keepGoing (defineMacro True),   completeExpression),
+#endif
   ("delete",    keepGoing deleteCmd,            noCompletion),
+#ifndef INTERACTIVE_EDITION
   ("edit",      keepGoing' editFile,            completeFilename),
   ("etags",     keepGoing createETagsFileCmd,   completeFilename),
+#endif
   ("force",     keepGoing forceCmd,             completeExpression),
   ("forward",   keepGoing forwardCmd,           noCompletion),
+#ifndef INTERACTIVE_EDITION
   ("help",      keepGoing help,                 noCompletion),
+#endif
   ("history",   keepGoing historyCmd,           noCompletion),
   ("info",      keepGoing' (info False),        completeIdentifier),
   ("info!",     keepGoing' (info True),         completeIdentifier),
@@ -177,7 +207,9 @@ ghciCommands = [
   ("quit",      quit,                           noCompletion),
   ("reload",    keepGoing' reloadModule,        noCompletion),
   ("run",       keepGoing runRun,               completeFilename),
+#ifndef INTERACTIVE_EDITION
   ("script",    keepGoing' scriptCmd,           completeFilename),
+#endif
   ("set",       keepGoing setCmd,               completeSetOptions),
   ("seti",      keepGoing setiCmd,              completeSeti),
   ("show",      keepGoing showCmd,              completeShowOptions),
@@ -188,11 +220,13 @@ ghciCommands = [
   ("stepmodule",keepGoing stepModuleCmd,        completeIdentifier),
   ("type",      keepGoing' typeOfExpr,          completeExpression),
   ("trace",     keepGoing traceCmd,             completeExpression),
+#ifndef INTERACTIVE_EDITION
   ("undef",     keepGoing undefineMacro,        completeMacro),
+#endif
   ("unset",     keepGoing unsetOptions,         completeSetOptions)
   ]
 
-
+#ifndef INTERACTIVE_EDITION
 -- We initialize readline (in the interactiveUI function) to use
 -- word_break_chars as the default set of completion word break characters.
 -- This can be overridden for a particular command (for example, filename
@@ -209,7 +243,7 @@ word_break_chars = let symbols = "!#$%&*+/<=>?@\\^|-~"
 
 flagWordBreakChars :: String
 flagWordBreakChars = " \t\n"
-
+#endif
 
 keepGoing :: (String -> GHCi ()) -> (String -> InputT GHCi Bool)
 keepGoing a str = keepGoing' (lift . a) str
@@ -224,6 +258,7 @@ keepGoingPaths a str
           Right args -> a args
       return False
 
+#ifndef INTERACTIVE_EDITION
 defShortHelpText :: String
 defShortHelpText = "use :? for help.\n"
 
@@ -327,7 +362,9 @@ defFullHelpText =
   "                                  [args, prog, prompt, editor, stop]\n" ++
   "   :showi language             show language flags for interactive evaluation\n" ++
   "\n"
+#endif
 
+#ifndef INTERACTIVE_EDITION
 findEditor :: IO String
 findEditor = do
   getEnv "EDITOR"
@@ -338,14 +375,20 @@ findEditor = do
 #else
         return ""
 #endif
+#endif
 
 foreign import ccall unsafe "rts_isProfiled" isProfiled :: IO CInt
 
+#ifdef INTERACTIVE_EDITION
+default_progname :: String
+default_progname = "<interactive>"
+#else
 default_progname, default_prompt, default_prompt2, default_stop :: String
 default_progname = "<interactive>"
 default_prompt = "%s> "
 default_prompt2 = "%s| "
 default_stop = ""
+#endif
 
 default_args :: [String]
 default_args = []
@@ -399,7 +442,9 @@ interactiveUI config srcs maybe_exprs = do
         hSetBuffering stdout NoBuffering
         -- We don't want the cmd line to buffer any input that might be
         -- intended for the program, so unbuffer stdin.
+#ifndef INTERACTIVE_EDITION
         hSetBuffering stdin NoBuffering
+#endif
         hSetBuffering stderr NoBuffering
 #if defined(mingw32_HOST_OS)
         -- On Unix, stdin will use the locale encoding.  The IO library
@@ -408,14 +453,18 @@ interactiveUI config srcs maybe_exprs = do
         hSetEncoding stdin utf8
 #endif
 
+#ifndef INTERACTIVE_EDITION
    default_editor <- liftIO $ findEditor
+#endif
    startGHCi (runGHCi srcs maybe_exprs)
         GHCiState{ progname           = default_progname,
                    GhciMonad.args     = default_args,
+#ifndef INTERACTIVE_EDITION
                    prompt             = defPrompt config,
                    prompt2            = defPrompt2 config,
                    stop               = default_stop,
                    editor             = default_editor,
+#endif
                    options            = [],
                    line_number        = 1,
                    break_ctr          = 0,
@@ -427,8 +476,13 @@ interactiveUI config srcs maybe_exprs = do
                    remembered_ctx     = [],
                    transient_ctx      = [],
                    ghc_e              = isJust maybe_exprs,
-                   short_help         = shortHelpText config,
-                   long_help          = fullHelpText config,
+#ifdef INTERACTIVE_EDITION
+                   breakinfo      = [],
+                   debuginfo      = [],
+#else
+                   short_help     = shortHelpText config,
+                   long_help      = fullHelpText config,
+#endif
                    lastErrorLocations = lastErrLocationsRef
                  }
 
@@ -449,6 +503,7 @@ ghciLogAction lastErrLocations dflags severity srcSpan style msg = do
             _ -> return ()
         _ -> return ()
 
+#ifndef INTERACTIVE_EDITION
 withGhcAppData :: (FilePath -> IO a) -> IO a -> IO a
 withGhcAppData right left = do
     either_dir <- tryIO (getAppUserDataDirectory "ghc")
@@ -457,11 +512,21 @@ withGhcAppData right left = do
             do createDirectoryIfMissing False dir `catchIO` \_ -> return ()
                right dir
         _ -> left
+#endif
 
 runGHCi :: [(FilePath, Maybe Phase)] -> Maybe [String] -> GHCi ()
 runGHCi paths maybe_exprs = do
   dflags <- getDynFlags
   let
+#ifdef INTERACTIVE_EDITION
+   read_dot_files = False
+
+   current_dir = return Nothing
+
+   app_user_dir = return Nothing
+
+   home_dir = return Nothing
+#else
    read_dot_files = not (gopt Opt_IgnoreDotGhci dflags)
 
    current_dir = return (Just ".ghci")
@@ -475,6 +540,7 @@ runGHCi paths maybe_exprs = do
     case either_dir of
       Right home -> return (Just (home </> ".ghci"))
       _ -> return Nothing
+#endif
 
    canonicalizePath' :: FilePath -> IO (Maybe FilePath)
    canonicalizePath' fp = liftM Just (canonicalizePath fp)
@@ -499,8 +565,12 @@ runGHCi paths maybe_exprs = do
            -- can we assume this will always be the case?
            -- This would be a good place for runFileInputT.
            Right hdl ->
+#ifdef INTERACTIVE_EDITION
+               do runInputT $ runCommands $ fileLoop hdl
+#else
                do runInputTWithPrefs defaultPrefs defaultSettings $
                             runCommands $ fileLoop hdl
+#endif
                   liftIO (hClose hdl `catchIO` \_ -> return ())
      where
       getDirectory f = case takeDirectory f of "" -> "."; d -> d
@@ -526,17 +596,23 @@ runGHCi paths maybe_exprs = do
   when (not (null paths)) $ do
      ok <- ghciHandle (\e -> do showException e; return Failed) $
                 -- TODO: this is a hack.
+#ifdef INTERACTIVE_EDITION
+                runInputT $
+#else
                 runInputTWithPrefs defaultPrefs defaultSettings $
+#endif
                     loadModule paths
      when (isJust maybe_exprs && failed ok) $
         liftIO (exitWith (ExitFailure 1))
 
   installInteractivePrint (interactivePrint dflags) (isJust maybe_exprs)
 
+#ifndef INTERACTIVE_EDITION
   -- if verbosity is greater than 0, or we are connected to a
   -- terminal, display the prompt in the interactive loop.
   is_tty <- liftIO (hIsTerminalDevice stdin)
   let show_prompt = verbosity dflags > 0 || is_tty
+#endif
 
   -- reset line number
   getGHCiState >>= \st -> setGHCiState st{line_number=1}
@@ -545,7 +621,11 @@ runGHCi paths maybe_exprs = do
         Nothing ->
           do
             -- enter the interactive loop
+#ifdef INTERACTIVE_EDITION
+            runInputT $ runCommands $ nextInputLine
+#else
             runGHCiInput $ runCommands $ nextInputLine show_prompt is_tty
+#endif
         Just exprs -> do
             -- just evaluate the expression we were given
             enqueueCommands exprs
@@ -558,13 +638,18 @@ runGHCi paths maybe_exprs = do
                             liftIO $ withProgName (progname st)
                                    $ topHandler e
                                    -- this used to be topHandlerFastExit, see #2228
+#ifdef INTERACTIVE_EDITION
+            runInputT $ do
+#else
             runInputTWithPrefs defaultPrefs defaultSettings $ do
+#endif
                 -- make `ghc -e` exit nonzero on invalid input, see Trac #7962
                 runCommands' hdle (Just $ hdle (toException $ ExitFailure 1) >> return ()) (return Nothing)
 
   -- and finally, exit
   liftIO $ when (verbosity dflags > 0) $ putStrLn "Leaving GHCi."
 
+#ifndef INTERACTIVE_EDITION
 runGHCiInput :: InputT GHCi a -> GHCi a
 runGHCiInput f = do
     dflags <- getDynFlags
@@ -575,7 +660,24 @@ runGHCiInput f = do
     runInputT
         (setComplete ghciCompleteWord $ defaultSettings {historyFile = histFile})
         f
+#endif
 
+#ifdef INTERACTIVE_EDITION
+foreign import ccall "io.h get_input"
+     c_get_input :: CString -> IO CString
+
+nextInputLine :: InputT GHCi (Maybe String)
+nextInputLine = do
+       st <- lift $ getGHCiState
+       l <- liftIO $ nextInputLine' ("<break>" ++ breakinfo st ++ "</break>" ++ "<debug>" ++ debuginfo st ++ "</debug>")
+       return (Just l)
+
+nextInputLine' :: String -> IO String
+nextInputLine' binfo = do
+       m <- (withCString binfo $ \cbinfo -> c_get_input cbinfo)
+       peekCString m
+ 
+#else
 -- | How to get the next input line from the user
 nextInputLine :: Bool -> Bool -> InputT GHCi (Maybe String)
 nextInputLine show_prompt is_tty
@@ -587,6 +689,7 @@ nextInputLine show_prompt is_tty
   | otherwise = do
     when show_prompt $ lift mkPrompt >>= liftIO . putStr
     fileLoop stdin
+#endif
 
 -- NOTE: We only read .ghci files if they are owned by the current user,
 -- and aren't world writable (files owned by root are ok, see #9324).
@@ -599,7 +702,7 @@ nextInputLine show_prompt is_tty
 -- the same directory while a process is running.
 
 checkPerms :: String -> IO Bool
-#ifdef mingw32_HOST_OS
+#if defined(mingw32_HOST_OS) || defined(INTERACTIVE_EDITION)
 checkPerms _ = return True
 #else
 checkPerms name =
@@ -645,6 +748,7 @@ fileLoop hdl = do
            incrementLineNo
            return (Just l')
 
+#ifndef INTERACTIVE_EDITION
 mkPrompt :: GHCi String
 mkPrompt = do
   st <- getGHCiState
@@ -686,7 +790,7 @@ mkPrompt = do
 
   dflags <- getDynFlags
   return (showSDoc dflags (f (prompt st)))
-
+#endif
 
 queryQueue :: GHCi (Maybe String)
 queryQueue = do
@@ -758,8 +862,11 @@ runOneCommand eh gCmd = do
     noSpace q = q >>= maybe (return Nothing)
                             (\c -> case removeSpaces c of
                                      ""   -> noSpace q
+#ifndef INTERACTIVE_EDITION
                                      ":{" -> multiLineCmd q
+#endif
                                      _    -> return (Just c) )
+#ifndef INTERACTIVE_EDITION
     multiLineCmd q = do
       st <- lift getGHCiState
       let p = prompt st
@@ -783,6 +890,7 @@ runOneCommand eh gCmd = do
             normSpace   x  = x
     -- SDM (2007-11-07): is userError the one to use here?
     collectError = userError "unterminated multiline command :{ .. :}"
+#endif
 
     -- | Handle a line of input
     doCommand :: String -> InputT GHCi (Maybe Bool)
@@ -850,9 +958,11 @@ checkInputForLayout stmt getStmt = do
    case Lexer.unP goToEnd pstate of
      (Lexer.POk _ False) -> return $ Just stmt
      _other              -> do
+#ifndef INTERACTIVE_EDITION
        st1 <- lift getGHCiState
        let p = prompt st1
        lift $ setGHCiState st1{ prompt = prompt2 st1 }
+#endif
        mb_stmt <- ghciHandle (\ex -> case fromException ex of
                             Just UserInterrupt -> return Nothing
                             _ -> case fromException ex of
@@ -861,7 +971,9 @@ checkInputForLayout stmt getStmt = do
                                       return Nothing
                                  _other -> liftIO (Exception.throwIO ex))
                      getStmt
+#ifndef INTERACTIVE_EDITION
        lift $ getGHCiState >>= \st' -> setGHCiState st'{ prompt = p }
+#endif
        -- the recursive call does not recycle parser state
        -- as we use a new string buffer
        case mb_stmt of
@@ -948,11 +1060,19 @@ afterRunStmt step_here run_result = do
   resumes <- GHC.getResumeContext
   case run_result of
      GHC.RunOk names -> do
+#ifdef INTERACTIVE_EDITION
+        st <- getGHCiState
+        setGHCiState st {breakinfo=[],debuginfo=[]}
+#endif
         show_types <- isOptionSet ShowType
         when show_types $ printTypeOfNames names
      GHC.RunBreak _ names mb_info
          | isNothing  mb_info ||
            step_here (GHC.resumeSpan $ head resumes) -> do
+#ifdef INTERACTIVE_EDITION
+               getStoppedAtBreakInfo (head resumes) names
+#else
+
                mb_id_loc <- toBreakIdAndLocation mb_info
                let bCmd = maybe "" ( \(_,l) -> onBreakCmd l ) mb_id_loc
                if (null bCmd)
@@ -961,6 +1081,7 @@ afterRunStmt step_here run_result = do
                -- run the command set with ":set stop <cmd>"
                st <- getGHCiState
                enqueueCommands [stop st]
+#endif
                return ()
          | otherwise -> resume step_here GHC.SingleStep >>=
                         afterRunStmt step_here >> return ()
@@ -973,6 +1094,7 @@ afterRunStmt step_here run_result = do
 
   return (case run_result of GHC.RunOk _ -> True; _ -> False)
 
+#ifndef INTERACTIVE_EDITION
 toBreakIdAndLocation ::
   Maybe GHC.BreakInfo -> GHCi (Maybe (Int, BreakLocation))
 toBreakIdAndLocation Nothing = return Nothing
@@ -993,6 +1115,20 @@ printStoppedAtBreakInfo res names = do
   tythings <- catMaybes `liftM` mapM GHC.lookupName namesSorted
   docs <- mapM pprTypeAndContents [i | AnId i <- tythings]
   printForUserPartWay $ vcat docs
+#endif
+
+#ifdef INTERACTIVE_EDITION
+getStoppedAtBreakInfo :: Resume -> [Name] -> GHCi ()
+getStoppedAtBreakInfo resume names = do
+  dflags <- getDynFlags
+  let binfo = showSDoc dflags (ppr (GHC.resumeSpan resume))
+  let namesSorted = sortBy compareNames names
+  tythings <- catMaybes `liftM` mapM GHC.lookupName namesSorted
+  dinfo <- mapM pprTypeAndContents [id | AnId id <- tythings]
+  let dinfo' = showSDoc dflags (vcat dinfo)
+  st <- getGHCiState
+  setGHCiState st {breakinfo=binfo,debuginfo=dinfo'}
+#endif
 
 printTypeOfNames :: [Name] -> GHCi ()
 printTypeOfNames names
@@ -1018,16 +1154,22 @@ specialCommand ('!':str) = lift $ shellEscape (dropWhile isSpace str)
 specialCommand str = do
   let (cmd,rest) = break isSpace str
   maybe_cmd <- lift $ lookupCommand cmd
+#ifndef INTERACTIVE_EDITION
   htxt <- lift $ short_help `fmap` getGHCiState
+#endif
   case maybe_cmd of
     GotCommand (_,f,_) -> f (dropWhile isSpace rest)
     BadCommand ->
+#ifndef INTERACTIVE_EDITION
       do liftIO $ hPutStr stdout ("unknown command ':" ++ cmd ++ "'\n"
                            ++ htxt)
+#endif
          return False
     NoLastCommand ->
+#ifndef INTERACTIVE_EDITION
       do liftIO $ hPutStr stdout ("there is no last command to perform\n"
                            ++ htxt)
+#endif
          return False
 
 shellEscape :: String -> GHCi Bool
@@ -1050,12 +1192,17 @@ lookupCommand str = do
 lookupCommand' :: String -> GHCi (Maybe Command)
 lookupCommand' ":" = return Nothing
 lookupCommand' str' = do
+#ifndef INTERACTIVE_EDITION
   macros    <- liftIO $ readIORef macros_ref
+#endif
   ghci_cmds <- ghci_commands `fmap` getGHCiState
   let (str, xcmds) = case str' of
           ':' : rest -> (rest, [])     -- "::" selects a builtin command
+#ifdef INTERACTIVE_EDITION
+          _          -> (str', []) -- otherwise include macros in lookup
+#else
           _          -> (str', macros) -- otherwise include macros in lookup
-
+#endif
       lookupExact  s = find $ (s ==)           . cmdName
       lookupPrefix s = find $ (s `isPrefixOf`) . cmdName
 
@@ -1118,10 +1265,12 @@ withSandboxOnly cmd this = do
 -----------------------------------------------------------------------------
 -- :help
 
+#ifndef INTERACTIVE_EDITION
 help :: String -> GHCi ()
 help _ = do
     txt <- long_help `fmap` getGHCiState
     liftIO $ putStr txt
+#endif
 
 -----------------------------------------------------------------------------
 -- :info
@@ -1192,6 +1341,7 @@ doWithArgs args cmd = enqueueCommands ["System.Environment.withArgs " ++
 -----------------------------------------------------------------------------
 -- :cd
 
+#ifndef INTERACTIVE_EDITION
 changeDirectory :: String -> InputT GHCi ()
 changeDirectory "" = do
   -- :cd on its own changes to the user's home directory
@@ -1209,6 +1359,7 @@ changeDirectory dir = do
   GHC.workingDirectoryChanged
   dir' <- expandPath dir
   liftIO $ setCurrentDirectory dir'
+#endif
 
 trySuccess :: GHC.GhcMonad m => m SuccessFlag -> m SuccessFlag
 trySuccess act =
@@ -1219,6 +1370,7 @@ trySuccess act =
 -----------------------------------------------------------------------------
 -- :edit
 
+#ifndef INTERACTIVE_EDITION
 editFile :: String -> InputT GHCi ()
 editFile str =
   do file <- if null str then lift chooseEditFile else expandPath str
@@ -1273,7 +1425,6 @@ chooseEditFile =
   where fromTarget (GHC.Target (GHC.TargetFile f _) _ _) = Just f
         fromTarget _ = Nothing -- when would we get a module target?
 
-
 -----------------------------------------------------------------------------
 -- :def
 
@@ -1327,6 +1478,7 @@ undefineMacro str = mapM_ undef (words str)
                 ("macro '" ++ macro_name ++ "' is not defined"))
            else do
             liftIO (writeIORef macros_ref (filter ((/= macro_name) . cmdName) cmds))
+#endif
 
 
 -----------------------------------------------------------------------------
@@ -1573,6 +1725,7 @@ quit _ = return True
 
 -- running a script file #1363
 
+#ifndef INTERACTIVE_EDITION
 scriptCmd :: String -> InputT GHCi ()
 scriptCmd ws = do
   case words ws of
@@ -1603,6 +1756,7 @@ runScript filename = do
             Just s  -> if s
               then scriptLoop script
               else return ()
+#endif
 
 -----------------------------------------------------------------------------
 -- :issafe
@@ -2009,6 +2163,7 @@ setCmd str
         case toArgs rest of
             Left err -> liftIO (hPutStrLn stderr err)
             Right args -> setArgs args
+#ifndef INTERACTIVE_EDITION
     Right ("prog",    rest) ->
         case toArgs rest of
             Right [prog] -> setProg prog
@@ -2017,6 +2172,7 @@ setCmd str
     Right ("prompt2", rest) -> setPrompt2 $ dropWhile isSpace rest
     Right ("editor",  rest) -> setEditor  $ dropWhile isSpace rest
     Right ("stop",    rest) -> setStop    $ dropWhile isSpace rest
+#endif
     _ -> case toArgs str of
          Left err -> liftIO (hPutStrLn stderr err)
          Right wds -> setOptions wds
@@ -2081,12 +2237,15 @@ showDynFlags show_all dflags = do
                ]
 
 setArgs, setOptions :: [String] -> GHCi ()
+#ifndef INTERACTIVE_EDITION
 setProg, setEditor, setStop :: String -> GHCi ()
+#endif
 
 setArgs args = do
   st <- getGHCiState
   setGHCiState st{ GhciMonad.args = args }
 
+#ifndef INTERACTIVE_EDITION
 setProg prog = do
   st <- getGHCiState
   setGHCiState st{ progname = prog }
@@ -2136,6 +2295,7 @@ setPrompt_ f err value = do
                        _ ->
                            liftIO $ hPutStrLn stderr "Can't parse prompt string. Use Haskell syntax."
            _ -> setGHCiState $ f value st
+#endif
 
 setOptions wds =
    do -- first, deal with the GHCi opts (+s, +t, etc.)
@@ -2211,11 +2371,13 @@ unsetOptions str
 
          defaulters =
            [ ("args"   , setArgs default_args)
+#ifndef INTERACTIVE_EDITION
            , ("prog"   , setProg default_progname)
            , ("prompt" , setPrompt default_prompt)
            , ("prompt2", setPrompt2 default_prompt2)
            , ("editor" , liftIO findEditor >>= setEditor)
            , ("stop"   , setStop default_stop)
+#endif
            ]
 
          no_flag ('-':'f':rest) = return ("-fno-" ++ rest)
@@ -2276,11 +2438,13 @@ showCmd str = do
   st <- getGHCiState
   case words str of
         ["args"]     -> liftIO $ putStrLn (show (GhciMonad.args st))
+#ifndef INTERACTIVE_EDITION
         ["prog"]     -> liftIO $ putStrLn (show (progname st))
         ["prompt"]   -> liftIO $ putStrLn (show (prompt st))
         ["prompt2"]  -> liftIO $ putStrLn (show (prompt2 st))
         ["editor"]   -> liftIO $ putStrLn (show (editor st))
         ["stop"]     -> liftIO $ putStrLn (show (stop st))
+#endif
         ["imports"]  -> showImports
         ["modules" ] -> showModules
         ["bindings"] -> showBindings
@@ -2438,6 +2602,7 @@ showLanguages' show_all dflags =
 -- -----------------------------------------------------------------------------
 -- Completion
 
+#ifndef INTERACTIVE_EDITION
 completeCmd :: String -> GHCi ()
 completeCmd argLine0 = case parseLine argLine0 of
     Just ("repl", resultRange, left) -> do
@@ -2476,10 +2641,29 @@ completeCmd argLine0 = case parseLine argLine0 of
                        Nothing
       where
         bndRead x = if null x then Nothing else Just (read x)
+#endif
 
+#ifdef INTERACTIVE_EDITION
+completeFilename, completeIdentifier, completeModule,
+    completeSetModule, completeSeti, completeShowiOptions,
+    completeHomeModule, completeSetOptions, completeShowOptions,
+    completeHomeModuleOrFile, completeExpression
+    :: CompletionFunc GHCi
 
+completeFilename = noCompletion
+completeIdentifier = noCompletion
+completeModule = noCompletion
+completeSetModule = noCompletion
+completeSeti = noCompletion
+completeShowiOptions = noCompletion
+completeHomeModule = noCompletion
+completeSetOptions = noCompletion
+completeShowOptions = noCompletion
+completeHomeModuleOrFile = noCompletion
+completeExpression = noCompletion
 
-completeGhciCommand, completeMacro, completeIdentifier, completeModule,
+#else
+completeGhciCommand, completeIdentifier, completeModule,
     completeSetModule, completeSeti, completeShowiOptions,
     completeHomeModule, completeSetOptions, completeShowOptions,
     completeHomeModuleOrFile, completeExpression
@@ -2598,7 +2782,7 @@ allVisibleModules dflags = listVisibleModuleNames dflags
 
 completeExpression = completeQuotedWord (Just '\\') "\"" listFiles
                         completeIdentifier
-
+#endif
 
 -- -----------------------------------------------------------------------------
 -- commands for debugger
@@ -2734,8 +2918,10 @@ backCmd = noArgs $ withSandboxOnly ":back" $ do
   printForUser $ ptext (sLit "Logged breakpoint at") <+> ppr pan
   printTypeOfNames names
    -- run the command set with ":set stop <cmd>"
+#ifndef INTERACTIVE_EDITION
   st <- getGHCiState
   enqueueCommands [stop st]
+#endif
 
 forwardCmd :: String -> GHCi ()
 forwardCmd = noArgs $ withSandboxOnly ":forward" $ do
@@ -2745,8 +2931,10 @@ forwardCmd = noArgs $ withSandboxOnly ":forward" $ do
                     else ptext (sLit "Logged breakpoint at")) <+> ppr pan
   printTypeOfNames names
    -- run the command set with ":set stop <cmd>"
+#ifndef INTERACTIVE_EDITION
   st <- getGHCiState
   enqueueCommands [stop st]
+#endif
 
 -- handle the "break" command
 breakCmd :: String -> GHCi ()
@@ -2816,7 +3004,9 @@ findBreakAndSet md lookupTickTree = do
                              { breakModule = md
                              , breakLoc = pan
                              , breakTick = tick
+#ifndef INTERACTIVE_EDITION
                              , onBreakCmd = ""
+#endif
                              }
                printForUser $
                   text "Breakpoint " <> ppr nm <>

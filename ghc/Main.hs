@@ -102,7 +102,11 @@ main = do
                  | otherwise = Just (drop 2 (last minusB_args))
 
     let argv1' = map (mkGeneralLocated "on the commandline") argv1
-    (argv2, staticFlagWarnings) <- parseStaticFlags argv1'
+    (argv2, staticFlagWarnings) <- do
+#ifdef INTERACTIVE_EDITION
+        resetStaticFlags
+#endif
+        parseStaticFlags argv1'
 
     -- 2. Parse the "mode" flags (--make, --interactive etc.)
     (mode, argv3, modeFlagWarnings) <- parseModeFlags argv2

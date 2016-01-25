@@ -315,6 +315,7 @@ Library
         cbits/primFloat.c
         cbits/rts.c
         cbits/sysconf.c
+        cbits/haskell-write.c
 
     include-dirs: include
     includes:

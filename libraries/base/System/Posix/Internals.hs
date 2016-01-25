@@ -429,11 +429,11 @@ foreign import ccall unsafe "HsBase.h umask"
    c_umask :: CMode -> IO CMode
 
 -- See Note: CSsize
-foreign import capi unsafe "HsBase.h write"
+foreign import capi unsafe "HsBase.h hs_write"
    c_write :: CInt -> Ptr Word8 -> CSize -> IO CSsize
 
 -- See Note: CSsize
-foreign import capi safe "HsBase.h write"
+foreign import capi safe "HsBase.h hs_write"
    c_safe_write :: CInt -> Ptr Word8 -> CSize -> IO CSsize
 
 foreign import ccall unsafe "HsBase.h __hscore_ftruncate"

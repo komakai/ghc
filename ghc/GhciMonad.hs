@@ -51,8 +51,12 @@ import System.IO
 import Control.Monad
 import GHC.Exts
 
+#ifdef INTERACTIVE_EDITION
+import InteractiveStubs
+#else
 import System.Console.Haskeline (CompletionFunc, InputT)
 import qualified System.Console.Haskeline as Haskeline
+#endif
 import Control.Monad.Trans.Class
 import Control.Monad.IO.Class
 
@@ -70,10 +74,12 @@ data GHCiState = GHCiState
      {
         progname       :: String,
         args           :: [String],
+#ifndef INTERACTIVE_EDITION
         prompt         :: String,
         prompt2        :: String,
         editor         :: String,
         stop           :: String,
+#endif
         options        :: [GHCiOption],
         line_number    :: !Int,         -- input line
         break_ctr      :: !Int,
@@ -108,9 +114,14 @@ data GHCiState = GHCiState
 
         ghc_e :: Bool, -- True if this is 'ghc -e' (or runghc)
 
+#ifdef INTERACTIVE_EDITION
+        breakinfo      :: String,
+        debuginfo      :: String,
+#else
         -- help text to display to a user
         short_help :: String,
         long_help  :: String,
+#endif
         lastErrorLocations :: IORef [(FastString, Int)]
      }
 
@@ -128,7 +139,9 @@ data BreakLocation
    { breakModule :: !GHC.Module
    , breakLoc    :: !SrcSpan
    , breakTick   :: {-# UNPACK #-} !Int
+#ifndef INTERACTIVE_EDITION
    , onBreakCmd  :: String
+#endif
    }
 
 instance Eq BreakLocation where
@@ -139,11 +152,16 @@ prettyLocations :: [(Int, BreakLocation)] -> SDoc
 prettyLocations []   = text "No active breakpoints."
 prettyLocations locs = vcat $ map (\(i, loc) -> brackets (int i) <+> ppr loc) $ reverse $ locs
 
+#ifdef INTERACTIVE_EDITION
+instance Outputable BreakLocation where
+   ppr loc = (ppr $ breakModule loc) <+> ppr (breakLoc loc)
+#else
 instance Outputable BreakLocation where
    ppr loc = (ppr $ breakModule loc) <+> ppr (breakLoc loc) <+>
                 if null (onBreakCmd loc)
                    then Outputable.empty
                    else doubleQuotes (text (onBreakCmd loc))
+#endif
 
 recordBreak :: BreakLocation -> GHCi (Bool{- was already present -}, Int)
 recordBreak brkLoc = do
@@ -223,6 +241,7 @@ instance ExceptionMonad GHCi where
                              in
                                 unGHCi (f g_restore) s
 
+#ifndef INTERACTIVE_EDITION
 instance Haskeline.MonadException Ghc where
   controlIO f = Ghc $ \s -> Haskeline.controlIO $ \(Haskeline.RunIO run) -> let
                     run' = Haskeline.RunIO (fmap (Ghc . const) . run . flip unGhc s)
@@ -232,10 +251,21 @@ instance Haskeline.MonadException GHCi where
   controlIO f = GHCi $ \s -> Haskeline.controlIO $ \(Haskeline.RunIO run) -> let
                     run' = Haskeline.RunIO (fmap (GHCi . const) . run . flip unGHCi s)
                     in fmap (flip unGHCi s) $ f run'
+#endif
 
 instance ExceptionMonad (InputT GHCi) where
+#ifdef INTERACTIVE_EDITION
+  gcatch m h = liftInputT $ runInputT m `gcatch` (\e -> runInputT (h e))
+  gmask f =
+      liftInputT $ gmask $ \io_restore ->
+                             let
+                                g_restore m = liftInputT $ io_restore (runInputT m)
+                             in
+                                runInputT (f g_restore)
+#else
   gcatch = Haskeline.catch
   gmask f = Haskeline.liftIOOp gmask (f . Haskeline.liftIOOp_)
+#endif
 
 isOptionSet :: GHCiOption -> GHCi Bool
 isOptionSet opt
@@ -348,7 +378,9 @@ foreign import ccall "revertCAFs" rts_revertCAFs  :: IO ()
 -- To flush buffers for the *interpreted* computation we need
 -- to refer to *its* stdout/stderr handles
 
+#ifndef INTERACTIVE_EDITION
 GLOBAL_VAR(stdin_ptr,  error "no stdin_ptr",  Ptr ())
+#endif
 GLOBAL_VAR(stdout_ptr, error "no stdout_ptr", Ptr ())
 GLOBAL_VAR(stderr_ptr, error "no stderr_ptr", Ptr ())
 
@@ -375,14 +407,21 @@ initInterpBuffering = do -- make sure these are linked
         -- ToDo: we should really look up these names properly, but
         -- it's a fiddle and not all the bits are exposed via the GHC
         -- interface.
+#ifndef INTERACTIVE_EDITION
       mb_stdin_ptr  <- ObjLink.lookupSymbol "base_GHCziIOziHandleziFD_stdin_closure"
+#endif
       mb_stdout_ptr <- ObjLink.lookupSymbol "base_GHCziIOziHandleziFD_stdout_closure"
       mb_stderr_ptr <- ObjLink.lookupSymbol "base_GHCziIOziHandleziFD_stderr_closure"
 
       let f ref (Just ptr) = writeIORef ref ptr
           f _   Nothing    = panic "interactiveUI:setBuffering2"
+#ifdef INTERACTIVE_EDITION
+      zipWithM_ f [stdout_ptr,stderr_ptr]
+                  [mb_stdout_ptr,mb_stderr_ptr]
+#else
       zipWithM_ f [stdin_ptr,stdout_ptr,stderr_ptr]
                   [mb_stdin_ptr,mb_stdout_ptr,mb_stderr_ptr]
+#endif
 
 flushInterpBuffers :: GHCi ()
 flushInterpBuffers
@@ -391,7 +430,11 @@ flushInterpBuffers
 
 turnOffBuffering :: IO ()
 turnOffBuffering
+#ifdef INTERACTIVE_EDITION
+ = do hdls <- mapM getHandle [stdout_ptr,stderr_ptr]
+#else
  = do hdls <- mapM getHandle [stdin_ptr,stdout_ptr,stderr_ptr]
+#endif
       mapM_ (\h -> hSetBuffering h NoBuffering) hdls
 
 getHandle :: IORef (Ptr ()) -> IO Handle
