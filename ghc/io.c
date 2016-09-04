@@ -14,7 +14,7 @@ char* get_input(char* strStatus)
 
 #else
 
-#ifndef HAVE_GETLINE
+#ifdef ANDROID
 
 ssize_t getline(char **lineptr, size_t *n, FILE *stream)
 {

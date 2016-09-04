@@ -1,0 +1,8 @@
+:load test/qsort.hs
+:break main
+main
+:step
+:step
+:continue
+:quit
+

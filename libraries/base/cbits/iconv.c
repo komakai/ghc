@@ -1,5 +1,7 @@
 #ifndef __MINGW32__
 
+#include "HsBase.h"
+
 #include <stdlib.h>
 #if defined(HAVE_LIBICONV)
 #include <iconv.h>
