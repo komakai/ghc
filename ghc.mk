@@ -179,7 +179,7 @@ $(error dyn is not in $$(GhcLibWays), but $$(DYNAMIC_GHC_PROGRAMS) is YES)
 endif
 else
 ifeq "$(findstring v,$(GhcLibWays))" ""
-$(warning v is not in $$(GhcLibWays), and $$(DYNAMIC_GHC_PROGRAMS) is not YES)
+$(error v is not in $$(GhcLibWays), and $$(DYNAMIC_GHC_PROGRAMS) is not YES)
 endif
 endif
 ifeq "$(GhcProfiled)" "YES"
@@ -726,10 +726,6 @@ BUILD_DIRS += utils/compare_sizes
 # Actually include all the sub-ghc.mk's
 
 include $(patsubst %, %/ghc.mk, $(BUILD_DIRS))
-
-ifeq "$(InteractiveEdition)" "YES"
-$(eval $(call linkall,ghc/linkall))
-endif
 
 # A useful pseudo-target (must be after the include above, because it needs
 # the value of things like $(libraries/base_dist-install_v_LIB).
@@ -1463,7 +1459,7 @@ phase_0_builds: $(utils/deriveConstants_dist_depfile_haskell)
 phase_0_builds: $(utils/deriveConstants_dist_depfile_c_asm)
 
 .PHONY: phase_1_subphase_1_builds
-phase_1_subphase_1_builds: $(GHC_STAGE1) $(ghc-pkg_INPLACE) $(genapply_INPLACE)
+phase_1_subphase_1_builds: $(GHC_STAGE1) $(genapply_INPLACE)
 
 .PHONY: phase_1_subphase_2_builds
 phase_1_subphase_2_builds: $(PACKAGE_DATA_MKS)

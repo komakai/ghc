@@ -112,6 +112,7 @@ module DynFlags (
 
         -- ** DynFlags C compiler options
         picCCOpts, picPOpts,
+        pieCCOpts, piePOpts, pieLOpts,
 
         -- * Configuration of the stg-to-stg passes
         StgToDo(..),
@@ -416,6 +417,7 @@ data GeneralFlag
    | Opt_Parallel
    | Opt_GranMacros
    | Opt_PIC
+   | Opt_PIE
    | Opt_SccProfilingOn
    | Opt_Ticky
    | Opt_Ticky_Allocd
@@ -1261,6 +1263,7 @@ wayGeneralFlags _ WayDyn      = [Opt_PIC]
     -- .so before loading the .so using the system linker.  Since only
     -- PIC objects can be linked into a .so, we have to compile even
     -- modules of the main program with -fPIC when using -dynamic.
+    -- required for Android Lollipop and upwards
 wayGeneralFlags _ WayProf     = [Opt_SccProfilingOn]
 wayGeneralFlags _ WayEventLog = []
 wayGeneralFlags _ WayPar      = [Opt_Parallel]
@@ -2695,6 +2698,7 @@ dynamic_flags = [
   , defFlag "fno-safe-infer"   (noArg (\d -> d { safeInfer = False  } ))
   , defGhcFlag "fPIC"          (NoArg (setGeneralFlag Opt_PIC))
   , defGhcFlag "fno-PIC"       (NoArg (unSetGeneralFlag Opt_PIC))
+  , defGhcFlag "fPIE"          (NoArg (setGeneralFlag Opt_PIE))
 
          ------ Debugging flags ----------------------------------------------
   , defGhcFlag "g"             (NoArg (setGeneralFlag Opt_Debug))
@@ -4028,13 +4032,34 @@ picCCOpts dflags
       -- correctly.  They need to reference data in the Haskell
       -- objects, but can't without -fPIC.  See
       -- http://ghc.haskell.org/trac/ghc/wiki/Commentary/PositionIndependentCode
-       | gopt Opt_PIC dflags || not (gopt Opt_Static dflags) ->
+       | (gopt Opt_PIC dflags || not (gopt Opt_Static dflags)) && not (gopt Opt_PIE dflags) ->
           ["-fPIC", "-U__PIC__", "-D__PIC__"]
        | otherwise                             -> []
 
 picPOpts :: DynFlags -> [String]
 picPOpts dflags
  | gopt Opt_PIC dflags = ["-U__PIC__", "-D__PIC__"]
+ | otherwise           = []
+
+
+pieCCOpts :: DynFlags -> [String]
+pieCCOpts dflags
+    = case platformOS (targetPlatform dflags) of
+      OSMinGW32 -- no -fPIE for Windows
+       | gopt Opt_PIE dflags -> ["-U__PIE__", "-D__PIE__"]
+       | otherwise           -> []
+      _
+       | gopt Opt_PIE dflags -> ["-fPIE", "-U__PIE__", "-D__PIE__"]
+       | otherwise                             -> []
+
+piePOpts :: DynFlags -> [String]
+piePOpts dflags
+ | gopt Opt_PIE dflags = ["-U__PIE__", "-D__PIE__"]
+ | otherwise           = []
+
+pieLOpts :: DynFlags -> [String]
+pieLOpts dflags
+ | gopt Opt_PIE dflags = ["-fPIE", "-pie"]
  | otherwise           = []
 
 -- -----------------------------------------------------------------------------

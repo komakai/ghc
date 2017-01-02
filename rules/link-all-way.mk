@@ -1,11 +1,11 @@
 
 define linkall-way # $1 = outputdir, $2 = way
 
-$1_$2_BIGLIB = $1/libhaskell$$($2_libsuf)
+$2_LINKALL_LIB = $1/lib$$(linkall_LIBNAME)$$($2_libsuf)
 
 ifeq "$2" "dyn"
 
-$$($1_$2_BIGLIB) : $$($2_ALL_OBJS)
+$$($2_LINKALL_LIB) : $$($2_ALL_OBJS)
 	mkdir -p $$(dir $$@);
 	"$$(ALL_LINKER)" \
          -shared -Wl,-Bsymbolic -Wl,-h,$(notdir $$@) \
@@ -16,7 +16,7 @@ $$($1_$2_BIGLIB) : $$($2_ALL_OBJS)
 else
 
 # Build the ordinary .a library
-$$($1_$2_BIGLIB) : $$($2_ALL_OBJS)
+$$($2_LINKALL_LIB) : $$($2_ALL_OBJS)
 	mkdir -p $$(dir $$@);
 	"$$(RM)" $$(RM_OPTS) $$@ $$@.contents
 	echo $$($2_ALL_OBJS) >> $$@.contents
@@ -29,7 +29,7 @@ endif
 endif
 
 $(call all-target,$1,all_$1_$2)
-$(call all-target,$1_$2,$$($1_$2_BIGLIB))
+$(call all-target,$1_$2,$$($2_LINKALL_LIB))
 
 endef
 

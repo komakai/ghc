@@ -12,6 +12,11 @@ Category: Development
 build-type: Simple
 cabal-version: >=1.10
 
+Flag interactive
+    Description: Build for use with interactive edition.
+    Default: False
+    Manual: True
+
 Executable ghc-pkg
     Default-Language: Haskell2010
     Main-Is: Main.hs
@@ -28,7 +33,8 @@ Executable ghc-pkg
                    bin-package-db,
                    bytestring
     if !os(windows)
-        Build-Depends: unix,
-                       terminfo
+        Build-Depends: unix
+    if !os(windows) && !flag(interactive)
+        Build-Depends: terminfo
     if os(windows)
         c-sources: CRT_noglob.c

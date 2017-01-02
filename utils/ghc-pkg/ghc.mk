@@ -53,19 +53,28 @@ utils/ghc-pkg/dist/package-data.mk: \
 # -----------------------------------------------------------------------------
 # Normal case: Build ghc-pkg with stage 1 and install it
 
-ifneq "$(ConfigureInteractiveEdition)$(InteractiveEdition)" "YES"
+ifneq "$(Stage1Only)" "YES"
+
+ifeq "$(ConfigureInteractiveEdition)$(InteractiveEdition)" "YES"
+utils/ghc-pkg_dist-install_CONFIGURE_OPTS += --flags=interactive
+endif
 
 utils/ghc-pkg_dist-install_USES_CABAL = YES
 
 utils/ghc-pkg_dist-install_PROGNAME = ghc-pkg
+utils/ghc-pkg_dist-install_PROGNAME_ALLLINK = ghc-pkg-alllink
 utils/ghc-pkg_dist-install_SHELL_WRAPPER = YES
 utils/ghc-pkg_dist-install_INSTALL = YES
 utils/ghc-pkg_dist-install_INSTALL_SHELL_WRAPPER_NAME = ghc-pkg-$(ProjectVersion)
 utils/ghc-pkg_dist-install_INSTALL_INPLACE = NO
+utils/ghc-pkg_dist-install_INSTALL_ALLLINK_INPLACE = YES
 
-$(eval $(call build-prog,utils/ghc-pkg,dist-install,1))
+utils/ghc-pkg_dist-install_MORE_HC_OPTS = $(GhcStage2HcOpts)
 
-utils/ghc-pkg_dist-install_HC_OPTS += -DSTAGE=2 -optc-DSTAGE=2
+$(eval $(call build-prog,utils/ghc-pkg,dist-install,1,YES))
+ifeq "$(ConfigureAndroid)$(Android)" "YES"
+utils/ghc-pkg_dist-install_HC_OPTS += -fPIE
+endif
 
 utils/ghc-pkg/dist-install/package-data.mk: \
     utils/ghc-pkg/dist-install/build/Version.hs

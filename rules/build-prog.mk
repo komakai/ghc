@@ -20,11 +20,12 @@
 # $(eval $(call build-prog,utils/genapply,dist-install,1))
 
 define build-prog
-$(call trace, build-prog($1,$2,$3))
-$(call profStart, build-prog($1,$2,$3))
+$(call trace, build-prog($1,$2,$3,$4))
+$(call profStart, build-prog($1,$2,$3,$4))
 # $1 = dir
 # $2 = distdir
 # $3 = GHC stage to use (0 == bootstrapping compiler)
+# $4 = YES if program should also be linked using linkall library
 
 ifneq "$$(CLEANING)" "YES"
 ifeq "$$($1_$2_PROGNAME)" ""
@@ -34,6 +35,9 @@ ifneq "$$($1_$2_PROG)" ""
 $$(error $1_$2_PROG is set)
 endif
 $1_$2_PROG = $$($1_$2_PROGNAME)$$(exeext$3)
+ifeq "$4" "YES"
+$1_$2_PROG_ALLLINK = $$($1_$2_PROGNAME_ALLLINK)$$(exeext$3)
+endif
 endif
 
 ifeq "$$(findstring $3,0 1 2)" ""
@@ -42,16 +46,18 @@ endif
 
 $(call clean-target,$1,$2,$1/$2)
 
-$$(eval $$(call build-prog-vars,$1,$2,$3))
+$$(eval $$(call build-prog-vars,$1,$2,$3,$4))
 
 ifeq "$(InteractiveEdition)$(target_stage)" "YES2"
 ifneq "$1" "ghc"
+ifneq "$1" "utils/ghc-pkg"
 $1_$2_NOT_NEEDED = YES
+endif
 endif
 endif
 
 ifneq "$$($1_$2_NOT_NEEDED)" "YES"
-$$(eval $$(call build-prog-helper,$1,$2,$3))
+$$(eval $$(call build-prog-helper,$1,$2,$3,$4))
 ifeq "$3" "0"
 $1_$2_HC_OPTS += -DSTAGE=1 -optc-DSTAGE=1
 else ifeq "$3" "1"
@@ -61,7 +67,7 @@ $1_$2_HC_OPTS += -DSTAGE=2 -optc-DSTAGE=2
 endif
 endif
 
-$(call profEnd, build-prog($1,$2,$3))
+$(call profEnd, build-prog($1,$2,$3,$4))
 endef
 
 
@@ -69,6 +75,7 @@ define build-prog-vars
 # $1 = dir
 # $2 = distdir
 # $3 = GHC stage to use (0 == bootstrapping compiler)
+# $4 = YES if program should also be linked using linkall library
 
 ifeq "$$($1_USES_CABAL)" "YES"
 $1_$2_USES_CABAL = YES
@@ -94,6 +101,16 @@ else ifeq "$$($1_$2_SHELL_WRAPPER)" "YES"
 $1_$2_WANT_INSTALLED_WRAPPER = YES
 else
 $1_$2_WANT_INSTALLED_WRAPPER = NO
+endif
+
+ifeq "$4" "YES"
+ifeq "$$($1_$2_INSTALL_ALLLINK_INPLACE)" "YES"
+$1_$2_WANT_INPLACE_ALLLINK_WRAPPER = YES
+else
+$1_$2_WANT_INPLACE_ALLLINK_WRAPPER = NO
+endif
+else
+$1_$2_WANT_INPLACE_ALLLINK_WRAPPER = NO
 endif
 
 $1_$2_depfile_base = $1/$2/build/.depend
@@ -123,17 +140,31 @@ $1_$2_INPLACE = $$($$($1_$2_PROGNAME)_INPLACE)
 endif
 endif
 
+ifeq "$4" "YES"
+ifeq "$$($1_$2_TOPDIR)" "YES"
+$$($1_$2_PROGNAME_ALLLINK)_INPLACE_ALLLINK = $$(INPLACE_TOPDIR)/$$($1_$2_PROG_ALLLINK)
+else
+$$($1_$2_PROGNAME_ALLLINK)_INPLACE_ALLLINK = $$(INPLACE_BIN)/$$($1_$2_PROG_ALLLINK)
+endif
+ifeq "$$($1_$2_WANT_INPLACE_ALLLINK_WRAPPER)" "YES"
+$1_$2_INPLACE_ALLLINK = $$(INPLACE_LIB)/bin/$$($1_$2_PROG_ALLLINK)
+else
+$1_$2_INPLACE_ALLLINK = $$($$($1_$2_PROGNAME_ALLLINK)_INPLACE_ALLLINK)
+endif
+endif
+
 endef
 
 define build-prog-helper
 # $1 = dir
 # $2 = distdir
 # $3 = GHC stage to use (0 == bootstrapping compiler)
+# $4 = YES if program should also be linked using linkall library
 
-$(call package-config,$1,$2,$3)
+$(call package-config,$1,$2,$3,$4)
 
 ifeq "$$($1_$2_USES_CABAL)" "YES"
-$(call build-package-data,$1,$2,$3)
+$(call build-package-data,$1,$2,$3,$4)
 ifneq "$$(NO_INCLUDE_PKGDATA)" "YES"
 ifeq "$3" "0"
 include $1/$2/package-data.mk
@@ -146,7 +177,11 @@ endif
 $(call all-target,$1,all_$1_$2)
 $(call all-target,$1_$2,$1/$2/build/tmp/$$($1_$2_PROG))
 
-$(call shell-wrapper,$1,$2)
+ifeq "$4" "YES"
+$(call all-target,$1_$2,$1/$2/build/tmp/$$($1_$2_PROG_ALLLINK))
+endif
+
+$(call shell-wrapper,$1,$2,$4)
 
 ifeq "$$($1_$2_PROGRAM_WAY)" ""
 ifeq "$3" "0"
@@ -173,7 +208,7 @@ $(call c-sources,$1,$2)
 # --- IMPLICIT RULES
 
 $(call distdir-opts,$1,$2,$3)
-$(call distdir-way-opts,$1,$2,$$($1_$2_PROGRAM_WAY),$3)
+$(call distdir-way-opts,$1,$2,$$($1_$2_PROGRAM_WAY),$3,$4)
 
 ifeq "$3" "0"
 # For stage 0, we use GHC to compile C sources so that we don't have to
@@ -203,6 +238,10 @@ ifeq "$$($1_$2_$$($1_$2_PROGRAM_WAY)_HS_OBJS)" ""
 $1_$2_$$($1_$2_PROGRAM_WAY)_GHC_LD_OPTS += -no-auto-link-packages -no-hs-main
 endif
 
+ifeq "$4" "YES"
+$1_$2_$$($1_$2_PROGRAM_WAY)_GHC_LD_OPTS_ALLLINK += -no-auto-link-packages -optl-L$$(linkall_DIR) -optl-l$$(linkall_LIBNAME)$$(basename $$($$($1_$2_PROGRAM_WAY)_libsuf))
+endif
+
 ifneq "$$(BINDIST)" "YES"
 # The quadrupled $'s here are because the _<way>_LIB variables aren't
 # necessarily set when this part of the makefile is read
@@ -217,6 +256,9 @@ $1/$2/build/tmp/$$($1_$2_PROG) $1/$2/build/tmp/$$($1_$2_PROG).dll : \
 
 $1_$2_PROG_NEEDS_C_WRAPPER = NO
 $1_$2_PROG_INPLACE = $$($1_$2_PROG)
+ifeq "$4" "YES"
+$1_$2_PROG_INPLACE_ALLLINK = $$($1_$2_PROG_ALLLINK)
+endif
 ifeq "$$(Windows_Host) $$($1_$2_PROGRAM_WAY)" "YES dyn"
 ifneq "$$($1_$2_HS_SRCS)" ""
 $1_$2_PROG_NEEDS_C_WRAPPER = YES
@@ -279,7 +321,10 @@ else
 ifeq "$$($1_$2_LINK_WITH_GCC)" "NO"
 $1/$2/build/tmp/$$($1_$2_PROG) : $$($1_$2_$$($1_$2_PROGRAM_WAY)_HS_OBJS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_C_OBJS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_S_OBJS) $$($1_$2_OTHER_OBJS) | $$$$(dir $$$$@)/.
 	$$(call cmd,$1_$2_HC) -o $$@ $$($1_$2_$$($1_$2_PROGRAM_WAY)_ALL_HC_OPTS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_GHC_LD_OPTS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_HS_OBJS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_C_OBJS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_S_OBJS) $$($1_$2_OTHER_OBJS) $$(addprefix -l,$$($1_$2_EXTRA_LIBRARIES))
-
+ifeq "$4" "YES"
+$1/$2/build/tmp/$$($1_$2_PROG_ALLLINK) : $$($1_$2_$$($1_$2_PROGRAM_WAY)_HS_OBJS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_C_OBJS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_S_OBJS) $$($1_$2_OTHER_OBJS) | $$$$(dir $$$$@)/.
+	$$(call cmd,$1_$2_HC) -o $$@ $$($1_$2_$$($1_$2_PROGRAM_WAY)_ALL_HC_OPTS_ALLLINK) $$($1_$2_$$($1_$2_PROGRAM_WAY)_GHC_LD_OPTS_ALLLINK) $$($1_$2_$$($1_$2_PROGRAM_WAY)_HS_OBJS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_C_OBJS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_S_OBJS) $$($1_$2_OTHER_OBJS) $$(addprefix -l,$$($1_$2_EXTRA_LIBRARIES))
+endif
 else
 $1/$2/build/tmp/$$($1_$2_PROG) : $$($1_$2_$$($1_$2_PROGRAM_WAY)_HS_OBJS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_C_OBJS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_S_OBJS) $$($1_$2_OTHER_OBJS) | $$$$(dir $$$$@)/.
 	$$(call cmd,$1_$2_CC) -o $$@ $$($1_$2_$$($1_$2_PROGRAM_WAY)_ALL_CC_OPTS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_ALL_LD_OPTS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_HS_OBJS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_C_OBJS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_S_OBJS) $$($1_$2_OTHER_OBJS) $$($1_$2_$$($1_$2_PROGRAM_WAY)_EXTRA_CC_OPTS) $$(addprefix -l,$$($1_$2_EXTRA_LIBRARIES))
@@ -297,6 +342,9 @@ ifeq "$$(strip $$(ALL_STAGE1_LIBS))" ""
 $$(error ordering failure in $1 ($2): ALL_STAGE1_LIBS is empty)
 endif
 $1/$2/build/tmp/$$($1_$2_PROG) : $$(ALL_STAGE1_LIBS) $$(ALL_RTS_LIBS) $$(OTHER_LIBS)
+ifeq "$4" "YES"
+$1/$2/build/tmp/$$($1_$2_PROG_ALLLINK) : $1/$2/build/tmp/$$($1_$2_PROG) $$$$($$$$($1_$2_PROGRAM_WAY)_LINKALL_LIB)
+endif
 endif
 endif
 endif
@@ -307,6 +355,12 @@ ifeq "$$($1_$2_INSTALL_INPLACE)" "YES"
 $$($1_$2_INPLACE) : $1/$2/build/tmp/$$($1_$2_PROG_INPLACE) | $$$$(dir $$$$@)/.
 	$$(INSTALL) -m 755 $$< $$@
 endif
+ifeq "$4" "YES"
+ifeq "$$($1_$2_INSTALL_ALLLINK_INPLACE)" "YES"
+$$($1_$2_INPLACE_ALLLINK) : $1/$2/build/tmp/$$($1_$2_PROG_INPLACE_ALLLINK) | $$$$(dir $$$$@)/.
+	$$(INSTALL) -m 755 $$< $$@
+endif
+endif
 endif
 
 endif
@@ -315,6 +369,12 @@ ifneq "$$($1_$2_INSTALL_INPLACE)" "NO"
 $(call all-target,$1_$2,$$($1_$2_INPLACE))
 endif
 $(call clean-target,$1,$2_inplace,$$($1_$2_INPLACE))
+
+ifeq "$4" "YES"
+ifneq "$$($1_$2_INSTALL_ALLLINK_INPLACE)" "NO"
+$(call all-target,$1_$2,$$($1_$2_INPLACE_ALLLINK))
+endif
+endif
 
 ifeq "$$($1_$2_INSTALL)" "YES"
 ifeq "$$($1_$2_PROG_NEEDS_C_WRAPPER)" "YES"

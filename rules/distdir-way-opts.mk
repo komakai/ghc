@@ -20,6 +20,7 @@ define distdir-way-opts # args: $1 = dir, $2 = distdir, $3 = way, $4 = stage
 #   $2 is the distdir (e.g. "dist", "dist-install" etc.)
 #   $3 is the way (e.g. "v", "p", etc.)
 #   $4 is the stage ("1", "2", "3")
+#   $5 YES if program should also be linked using linkall library
 # 
 # -----------------------------
 # The variables affecting Haskell compilations are as follows, including
@@ -124,9 +125,36 @@ $1_$2_$3_MOST_HC_OPTS = \
  $$(SRC_HC_WARNING_OPTS) \
  $$(EXTRA_HC_OPTS)
 
+ifeq "$5" "YES"
+$1_$2_$3_MOST_HC_OPTS_ALLLINK = \
+ $$(WAY_$3_HC_OPTS) \
+ $$(CONF_HC_OPTS) \
+ $$(SRC_HC_OPTS) \
+ $$($1_HC_OPTS) \
+ $$(foreach dir,$$(filter-out /%,$$($1_$2_INCLUDE_DIRS)),-I$1/$$(dir)) \
+ $$(foreach dir,$$(filter /%,$$($1_$2_INCLUDE_DIRS)),-I$$(dir)) \
+ $$(foreach inc,$$($1_$2_INCLUDE),-\#include "$$(inc)") \
+ $$(foreach opt,$$($1_$2_CPP_OPTS),-optP$$(opt)) \
+ $$(if $$($1_PACKAGE),-optP-include -optP$1/$2/build/autogen/cabal_macros.h) \
+ $$($1_$2_HC_OPTS) \
+ $$(CONF_HC_OPTS_STAGE$4) \
+ $$($1_$2_MORE_HC_OPTS) \
+ $$($1_$2_EXTRA_HC_OPTS) \
+ $$($1_$2_$3_HC_OPTS) \
+ $$($$(basename $$(subst ./,,$$<))_HC_OPTS) \
+ $$(SRC_HC_WARNING_OPTS) \
+ $$(EXTRA_HC_OPTS)
+endif
+
 $1_$2_$3_MOST_DIR_HC_OPTS = \
  $$($1_$2_$3_MOST_HC_OPTS) \
  -odir $1/$2/build -hidir $1/$2/build -stubdir $1/$2/build
+
+ifeq "$5" "YES"
+$1_$2_$3_MOST_DIR_HC_OPTS_ALLLINK = \
+ $$($1_$2_$3_MOST_HC_OPTS_ALLLINK) \
+ -odir $1/$2/build -hidir $1/$2/build -stubdir $1/$2/build
+endif
 
 # NB. CONF_HC_OPTS_STAGE$4 has to be late enough to override $1_$2_HC_OPTS, so
 # that -O0 is effective (see #5484)
@@ -138,6 +166,12 @@ $1_$2_$3_ALL_HC_OPTS = \
  $$($1_$2_$3_MOST_DIR_HC_OPTS) \
  $$(if $$(findstring YES,$$($1_$2_SplitObjs)),$$(if $$(findstring dyn,$3),,-split-objs),) \
  $$(if $$(findstring YES,$$($1_$2_DYNAMIC_TOO)),$$(if $$(findstring v,$3),-dynamic-too))
+
+ifeq "$5" "YES"
+$1_$2_$3_ALL_HC_OPTS_ALLLINK = \
+ -hisuf $$($3_hisuf) -osuf  $$($3_osuf) -hcsuf $$($3_hcsuf) \
+ $$($1_$2_$3_MOST_DIR_HC_OPTS_ALLLINK)
+endif
 
 ifeq "$3" "dyn"
 ifeq "$$(HostOS_CPP)" "mingw32"
@@ -171,6 +205,12 @@ $1_$2_$3_ALL_LD_OPTS = \
 $1_$2_$3_GHC_LD_OPTS = \
  $$(addprefix -optl, $$($1_$2_$3_ALL_LD_OPTS)) \
  $$($1_$2_$3_MOST_HC_OPTS)
+
+ifeq "$5" "YES"
+$1_$2_$3_GHC_LD_OPTS_ALLLINK = \
+ $$(addprefix -optl, $$($1_$2_$3_ALL_LD_OPTS)) \
+ $$($1_$2_$3_MOST_HC_OPTS_ALLLINK)
+endif
 
 $1_$2_$3_ALL_AS_OPTS = \
  $$(CONF_AS_OPTS) \

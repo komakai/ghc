@@ -1099,6 +1099,7 @@ runPhase (RealPhase cc_phase) input_fn dflags
 
         let gcc_extra_viac_flags = extraGccViaCFlags dflags
         let pic_c_flags = picCCOpts dflags
+        let pie_c_flags = pieCCOpts dflags
 
         let verbFlags = getVerbFlags dflags
 
@@ -1169,6 +1170,8 @@ runPhase (RealPhase cc_phase) input_fn dflags
                         ]
                        ++ map SysTools.Option (
                           pic_c_flags
+
+                       ++ pie_c_flags
 
                 -- Stub files generated for foreign exports references the runIO_closure
                 -- and runNonIO_closure symbols, which are defined in the base package.
@@ -1270,6 +1273,7 @@ runPhase (RealPhase (As with_cpp)) input_fn dflags
         as_prog <- whichAsProg
         let cmdline_include_paths = includePaths dflags
         let pic_c_flags = picCCOpts dflags
+        let pie_c_flags = pieCCOpts dflags
 
         next_phase <- maybeMergeStub
         output_fn <- phaseOutputFilename next_phase
@@ -1285,6 +1289,7 @@ runPhase (RealPhase (As with_cpp)) input_fn dflags
 
                        -- See Note [-fPIC for assembler]
                        ++ map SysTools.Option pic_c_flags
+                       ++ map SysTools.Option pie_c_flags
 
         -- We only support SparcV9 and better because V8 lacks an atomic CAS
         -- instruction so we have to make sure that the assembler accepts the
@@ -1328,6 +1333,7 @@ runPhase (RealPhase SplitAs) _input_fn dflags
             split_odir  = base_o ++ "_" ++ osuf ++ "_split"
 
         let pic_c_flags = picCCOpts dflags
+        let pie_c_flags = pieCCOpts dflags
 
         -- this also creates the hierarchy
         liftIO $ createDirectoryIfMissing True split_odir
@@ -1364,6 +1370,7 @@ runPhase (RealPhase SplitAs) _input_fn dflags
 
                           -- See Note [-fPIC for assembler]
                           map SysTools.Option pic_c_flags ++
+                          map SysTools.Option pie_c_flags ++
 
                           [ SysTools.Option "-c"
                           , SysTools.Option "-o"
@@ -1645,13 +1652,16 @@ mkExtraObj dflags extn xs
       writeFile cFile xs
       let rtsDetails = getPackageDetails dflags rtsPackageKey
           pic_c_flags = picCCOpts dflags
+          pie_c_flags = pieCCOpts dflags
+
       SysTools.runCc dflags
                      ([Option        "-c",
                        FileOption "" cFile,
                        Option        "-o",
                        FileOption "" oFile]
                       ++ map (FileOption "-I") (includeDirs rtsDetails)
-                      ++ map Option pic_c_flags)
+                      ++ map Option pic_c_flags
+                      ++ map Option pie_c_flags)
       return oFile
 
 -- When linking a binary, we need to create a C main() function that
@@ -1892,6 +1902,7 @@ linkBinary' staticLink dflags o_files dep_packages = do
 
     let lib_paths = libraryPaths dflags
     let lib_path_opts = map ("-L"++) lib_paths
+    let pie_opts = pieLOpts dflags
 
     extraLinkObj <- mkExtraObjToLinkIntoBinary dflags
     noteLinkObjs <- mkNoteObjsToLinkIntoBinary dflags dep_packages
@@ -2002,7 +2013,8 @@ linkBinary' staticLink dflags o_files dep_packages = do
                           else [])
 
                       ++ o_files
-                      ++ lib_path_opts)
+                      ++ lib_path_opts
+                      ++ pie_opts)
                       ++ extra_ld_inputs
                       ++ map SysTools.Option (
                          rc_objs
@@ -2113,7 +2125,7 @@ linkStaticLibCheck dflags o_files dep_packages
 
 doCpp :: DynFlags -> Bool -> FilePath -> FilePath -> IO ()
 doCpp dflags raw input_fn output_fn = do
-    let hscpp_opts = picPOpts dflags
+    let hscpp_opts = picPOpts dflags ++ piePOpts dflags
     let cmdline_include_paths = includePaths dflags
 
     pkg_include_dirs <- getPackageIncludePath dflags []

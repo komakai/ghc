@@ -72,7 +72,7 @@ import System.Posix hiding (fdToHandle)
 import qualified System.Info(os)
 #endif
 
-#if !defined(mingw32_HOST_OS) && !defined(BOOTSTRAPPING)
+#if !defined(mingw32_HOST_OS) && !defined(BOOTSTRAPPING) && !defined(INTERACTIVE_EDITION)
 import System.Console.Terminfo as Terminfo
 #endif
 
@@ -1204,7 +1204,7 @@ listPackages verbosity my_flags mPackageName mModuleName = do
 
   if simple_output then show_simple stack else do
 
-#if defined(mingw32_HOST_OS) || defined(BOOTSTRAPPING)
+#if defined(mingw32_HOST_OS) || defined(BOOTSTRAPPING) || defined(INTERACTIVE_EDITION)
     mapM_ show_normal stack
 #else
     let

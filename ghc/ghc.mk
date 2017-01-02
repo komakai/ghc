@@ -94,8 +94,15 @@ ifeq "$(GhcProfiled)" "YES"
 ghc_stage2_PROGRAM_WAY = p
 endif
 
+ifeq "$(InteractiveEdition)" "YES"
+linkall_LIBNAME = haskell
+linkall_DIR = ghc/linkall
+$(eval $(call linkall,$(linkall_DIR)))
+endif
+
 ghc_stage1_PROGNAME = ghc-stage1
 ghc_stage2_PROGNAME = ghc-stage2
+ghc_stage2_PROGNAME_ALLLINK = ghc-stage2-alllink
 ghc_stage3_PROGNAME = ghc-stage3
 
 ghc_stage1_SHELL_WRAPPER = YES
@@ -106,6 +113,7 @@ ghc_stage2_SHELL_WRAPPER_NAME = ghc/ghc.wrapper
 ghc_stage3_SHELL_WRAPPER_NAME = ghc/ghc.wrapper
 ghc_stage1_INSTALL_INPLACE = YES
 ghc_stage2_INSTALL_INPLACE = YES
+ghc_stage2_INSTALL_ALLLINK_INPLACE = YES
 ghc_stage3_INSTALL_INPLACE = YES
 
 ghc_stage$(INSTALL_GHC_STAGE)_INSTALL = YES
@@ -137,7 +145,10 @@ $(eval $(call build-prog,ghc,stage1,0))
 ifeq "$(GhcLib)" "YES"
 $(eval $(call build-package,ghc,stage2,1))
 else
-$(eval $(call build-prog,ghc,stage2,1))
+$(eval $(call build-prog,ghc,stage2,1,YES))
+ifeq "$(ConfigureAndroid)$(Android)" "YES"
+ghc_stage2_HC_OPTS += -fPIE
+endif
 endif
 $(eval $(call build-prog,ghc,stage3,2))
 

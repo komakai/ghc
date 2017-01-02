@@ -1,11 +1,6 @@
 
 define linkall # $1 = outputdir
 
-# $2 will be empty - doesn't matter
-$(call clean-target,$1,$2,$1)
-distclean : clean_$1_$2_config
-maintainer-clean : distclean
-
 ALL_LINKER = $$(LD)
 ALL_LINKER_OPTS = $$(CONF_GCC_LINKER_OPTS_STAGE2)
 

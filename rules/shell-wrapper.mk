@@ -11,10 +11,11 @@
 # -----------------------------------------------------------------------------
 
 define shell-wrapper
-$(call trace, shell-wrapper($1,$2))
-$(call profStart, shell-wrapper($1,$2))
+$(call trace, shell-wrapper($1,$2,$3))
+$(call profStart, shell-wrapper($1,$2,$3))
 # $1 = dir
 # $2 = distdir
+# $3 = YES if shell-wrapper should also be create for alllink program
 
 ifeq "$$($1_$2_SHELL_WRAPPER_NAME)" ""
 $1_$2_SHELL_WRAPPER_NAME = $1/$$($1_$2_PROGNAME).wrapper
@@ -53,6 +54,43 @@ else
 	echo 'exec "$$$$executablename" $$$${1+"$$$$@"}'                     >> $$@
 endif
 	$$(EXECUTABLE_FILE)                                                     $$@
+
+endif
+
+ifeq "$3" "YES"
+
+ifeq "$$($1_$2_WANT_INPLACE_ALLLINK_WRAPPER)" "YES"
+
+ifeq "$$($1_$2_TOPDIR)" "YES"
+INPLACE_WRAPPER_ALLLINK = $$(INPLACE_LIB)/$$($1_$2_PROG_ALLLINK)
+else
+INPLACE_WRAPPER_ALLLINK = $$(INPLACE_BIN)/$$($1_$2_PROG_ALLLINK)
+endif
+
+all_$1_$2 : $$(INPLACE_WRAPPER_ALLLINK)
+
+$$(INPLACE_WRAPPER_ALLLINK): $$($1_$2_INPLACE_ALLLINK)
+	$$(call removeFiles,                                                    $$@)
+	echo '#!$$(SHELL)'                                                   >> $$@
+	echo 'top="$$(TOP)"'                                                 >> $$@
+	echo 'executablename="$$$$top/$$<"'                                  >> $$@
+	echo 'datadir="$$$$top/$$(INPLACE_LIB)"'                             >> $$@
+	echo 'bindir="$$$$top/$$(INPLACE_BIN)"'                              >> $$@
+	echo 'topdir="$$$$top/$$(INPLACE_TOPDIR)"'                           >> $$@
+	echo 'pgmgcc="$$(WhatGccIsCalled)"'                                  >> $$@
+	$$($1_$2_SHELL_WRAPPER_EXTRA)
+	$$($1_$2_INPLACE_SHELL_WRAPPER_EXTRA)
+ifeq "$$(DYNAMIC_GHC_PROGRAMS)" "YES"
+	echo '$$(call prependLibraryPath,$$$$top/$$(linkall_DIR))' >> $$@
+endif
+ifeq "$$($1_$2_SHELL_WRAPPER)" "YES"
+	cat $$($1_$2_SHELL_WRAPPER_NAME)                                     >> $$@
+else
+	echo 'exec "$$$$executablename" $$$${1+"$$$$@"}'                     >> $$@
+endif
+	$$(EXECUTABLE_FILE)                                                     $$@
+
+endif
 
 endif
 
