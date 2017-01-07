@@ -1,13 +1,22 @@
-#!/bin/sh
-mkdir -p android-install/inplace/lib/package.conf.d
-mkdir -p android-install/inplace/lib/bin
-mkdir -p android-install/inplace/bin
-mkdir -p android-install/ghc/linkall
-mkdir -p android-install/libraries
+#!/bin/bash
 
-cp inplace/lib/package.conf.d/* android-install/inplace/lib/package.conf.d
-cp inplace/lib/bin/*-alllink android-install/inplace/lib/bin
-cp inplace/bin/*-alllink android-install/inplace/bin
-cp ghc/linkall/*.so android-install/ghc/linkall
+if [ $# -eq 0 ]
+  then
+    echo "Usage: `basename $0` installdir"
+    exit 1
+fi
 
-find libraries -name "*.dyn_hi" -exec install -D {} android-install/{} \;
+installdir=$1/ghc
+
+sed -i -e "s@top=\".*\"@top=\"$installdir\"@" ghc/inplace/bin/ghc-pkg-alllink
+sed -i -e "s@top=\".*\"@top=\"$installdir\"@" ghc/inplace/bin/ghc-stage2-alllink
+
+adb shell rm -r $installdir
+adb push ghc $1
+adb shell chmod 757 $installdir/inplace/bin/ghc-pkg-alllink
+adb shell chmod 757 $installdir/inplace/bin/ghc-stage2-alllink
+adb shell chmod 757 $installdir/inplace/lib/bin/ghc-pkg-alllink
+adb shell chmod 757 $installdir/inplace/lib/bin/ghc-stage2-alllink
+adb shell chmod 757 $installdir/ghc/linkall/`ls ghc/ghc/linkall`
+
+adb shell $installdir/inplace/bin/ghc-pkg-alllink recache --force -f $installdir/inplace/lib/package.conf.d

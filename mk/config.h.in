@@ -411,3 +411,88 @@
 
 /* Define as `fork' if `vfork' does not work. */
 #undef vfork
+
+/* WordSize */
+#undef WordSize
+
+/* Unregisterised */
+#undef UnregisterisedDefault
+
+/* HaskellHaveGnuNonexecStack */
+#undef HaskellHaveGnuNonexecStack
+
+/* HaskellHaveIdentDirective */
+#undef HaskellHaveIdentDirective
+
+/* HaskellHaveSubsectionsViaSymbols */
+#undef HaskellHaveSubsectionsViaSymbols
+
+/* HaskellSectionTypeParam */
+#undef HaskellSectionTypeParam
+
+/* HaskellTargetArch */
+#undef HaskellTargetArch
+
+/* HaskellTargetOs */
+#undef HaskellTargetOs
+
+/* GccExtraViaCOpts */
+#undef GccExtraViaCOpts
+
+/* LdHasNoCompactUnwind */
+#undef LdHasNoCompactUnwind
+
+/* LdHasBuildId */
+#undef LdHasBuildId
+ 
+/* LdHasFilelist */
+#undef LdHasFilelist
+
+/* LdIsGNULd */
+#undef LdIsGNULd
+
+/* SettingsCCompilerCommand */
+#undef SettingsCCompilerCommand
+
+/* SettingsCCompilerFlags */
+#undef SettingsCCompilerFlags
+
+/* SettingsCCompilerLinkFlags */
+#undef SettingsCCompilerLinkFlags
+
+/* SettingsDllWrapCommand */
+#undef SettingsDllWrapCommand
+
+/* SettingsHaskellCPPCommand */
+#undef SettingsHaskellCPPCommand
+
+/* SettingsHaskellCPPFlags */
+#undef SettingsHaskellCPPFlags
+
+/* SettingsLdCommand */
+#undef SettingsLdCommand
+
+/* SettingsLdFlags */
+#undef SettingsLdFlags
+
+/* SettingsLibtoolCommand */
+#undef SettingsLibtoolCommand
+
+/* SettingsLlcCommand */
+#undef SettingsLlcCommand
+
+/* SettingsOptCommand */
+#undef SettingsOptCommand
+
+/* SettingsPerlCommand */
+#undef SettingsPerlCommand
+
+/* SettingsReadElfCommand */
+#undef SettingsReadElfCommand
+
+/* SettingsTouchCommand */
+#undef SettingsTouchCommand
+
+/* SettingsWindresCommand */
+#undef SettingsWindresCommand
+

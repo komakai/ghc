@@ -81,7 +81,7 @@ $$(INPLACE_WRAPPER_ALLLINK): $$($1_$2_INPLACE_ALLLINK)
 	$$($1_$2_SHELL_WRAPPER_EXTRA)
 	$$($1_$2_INPLACE_SHELL_WRAPPER_EXTRA)
 ifeq "$$(DYNAMIC_GHC_PROGRAMS)" "YES"
-	echo '$$(call prependLibraryPath,$$$$top/$$(linkall_DIR))' >> $$@
+	echo '$$(call prependLibraryPath,$$$$top)' >> $$@
 endif
 ifeq "$$($1_$2_SHELL_WRAPPER)" "YES"
 	cat $$($1_$2_SHELL_WRAPPER_NAME)                                     >> $$@

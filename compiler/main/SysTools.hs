@@ -54,6 +54,7 @@ module SysTools (
  ) where
 
 #include "HsVersions.h"
+#include "../../ghcautoconf.h"
 
 import DriverPhases
 import Module
@@ -204,6 +205,9 @@ initSysTools mbMinusB
            installed :: FilePath -> FilePath
            installed file = top_dir </> file
 
+#ifdef INTERACTIVE_EDITION
+       mySettings <- return []
+#else
        settingsStr <- readFile settingsFile
        platformConstantsStr <- readFile platformConstantsFile
        mySettings <- case maybeReadFuzzy settingsStr of
@@ -217,7 +221,8 @@ initSysTools mbMinusB
                             Nothing ->
                                 pgmError ("Can't parse " ++
                                           show platformConstantsFile)
-       let getSetting key = case lookup key mySettings of
+#endif
+       let getSetting key defval = case lookup key mySettings of
                             Just xs ->
                                 return $ case stripPrefix "$topdir" xs of
                                          Just [] ->
@@ -227,37 +232,42 @@ initSysTools mbMinusB
                                              top_dir ++ xs'
                                          _ ->
                                              xs
-                            Nothing -> pgmError ("No entry for " ++ show key ++ " in " ++ show settingsFile)
-           getBooleanSetting key = case lookup key mySettings of
+                            Nothing ->
+                                return defval
+           getBooleanSetting key defVal = case lookup key mySettings of
                                    Just "YES" -> return True
                                    Just "NO" -> return False
                                    Just xs -> pgmError ("Bad value for " ++ show key ++ ": " ++ show xs)
-                                   Nothing -> pgmError ("No entry for " ++ show key ++ " in " ++ show settingsFile)
-           readSetting key = case lookup key mySettings of
+                                   Nothing ->
+                                return defval
+           readSetting key defVal = case lookup key mySettings of
                              Just xs ->
                                  case maybeRead xs of
                                  Just v -> return v
                                  Nothing -> pgmError ("Failed to read " ++ show key ++ " value " ++ show xs)
-                             Nothing -> pgmError ("No entry for " ++ show key ++ " in " ++ show settingsFile)
-       crossCompiling <- getBooleanSetting "cross compiling"
-       targetArch <- readSetting "target arch"
-       targetOS <- readSetting "target os"
-       targetWordSize <- readSetting "target word size"
-       targetUnregisterised <- getBooleanSetting "Unregisterised"
-       targetHasGnuNonexecStack <- readSetting "target has GNU nonexec stack"
-       targetHasIdentDirective <- readSetting "target has .ident directive"
-       targetHasSubsectionsViaSymbols <- readSetting "target has subsections via symbols"
-       targetSupportsSectionType <- readSetting "target supports .section directive type parameter"
-       myExtraGccViaCFlags <- getSetting "GCC extra via C opts"
+                             Nothing ->
+                                 case maybeRead defval of
+                                 Just v -> return v
+                                 Nothing -> pgmError ("Failed to read " ++ show key ++ " value " ++ show defval)
+       crossCompiling <- getBooleanSetting "cross compiling" "NO"
+       targetArch <- readSetting "target arch" HaskellTargetArch
+       targetOS <- readSetting "target os" HaskellTargetOs
+       targetWordSize <- readSetting "target word size" WordSize
+       targetUnregisterised <- getBooleanSetting "Unregisterised" UnregisterisedDefault
+       targetHasGnuNonexecStack <- readSetting "target has GNU nonexec stack" HaskellHaveGnuNonexecStack
+       targetHasIdentDirective <- readSetting "target has .ident directive" HaskellHaveIdentDirective
+       targetHasSubsectionsViaSymbols <- readSetting "target has subsections via symbols" HaskellHaveSubsectionsViaSymbols
+       targetSupportsSectionType <- readSetting "target supports .section directive type parameter" HaskellSectionTypeParam
+       myExtraGccViaCFlags <- getSetting "GCC extra via C opts" GccExtraViaCOpts
        -- On Windows, mingw is distributed with GHC,
        -- so we look in TopDir/../mingw/bin
        -- It would perhaps be nice to be able to override this
        -- with the settings file, but it would be a little fiddly
        -- to make that possible, so for now you can't.
-       gcc_prog <- getSetting "C compiler command"
-       gcc_args_str <- getSetting "C compiler flags"
-       cpp_prog <- getSetting "Haskell CPP command"
-       cpp_args_str <- getSetting "Haskell CPP flags"
+       gcc_prog <- getSetting "C compiler command" SettingsCCompilerCommand
+       gcc_args_str <- getSetting "C compiler flags" SettingsCCompilerFlags
+       cpp_prog <- getSetting "Haskell CPP command" SettingsHaskellCPPCommand
+       cpp_args_str <- getSetting "Haskell CPP flags" SettingsHaskellCPPFlags
        let unreg_gcc_args = if targetUnregisterised
                             then ["-DNO_REGS", "-DUSE_MINIINTERPRETER"]
                             else []
@@ -270,11 +280,11 @@ initSysTools mbMinusB
            gcc_args = map Option (words gcc_args_str
                                ++ unreg_gcc_args
                                ++ tntc_gcc_args)
-       ldSupportsCompactUnwind <- getBooleanSetting "ld supports compact unwind"
-       ldSupportsBuildId       <- getBooleanSetting "ld supports build-id"
-       ldSupportsFilelist      <- getBooleanSetting "ld supports filelist"
-       ldIsGnuLd               <- getBooleanSetting "ld is GNU ld"
-       perl_path <- getSetting "perl command"
+       ldSupportsCompactUnwind <- getBooleanSetting "ld supports compact unwind" LdHasNoCompactUnwind
+       ldSupportsBuildId       <- getBooleanSetting "ld supports build-id" LdHasBuildId
+       ldSupportsFilelist      <- getBooleanSetting "ld supports filelist" LdHasFilelist
+       ldIsGnuLd               <- getBooleanSetting "ld is GNU ld" LdIsGNULd
+       perl_path <- getSetting "perl command" SettingsPerlCommand
 
        let pkgconfig_path = installed "package.conf.d"
            ghc_usage_msg_path  = installed "ghc-usage.txt"
@@ -287,13 +297,13 @@ initSysTools mbMinusB
              -- split is a Perl script
            split_script  = installed cGHC_SPLIT_PGM
 
-       windres_path <- getSetting "windres command"
-       libtool_path <- getSetting "libtool command"
-       readelf_path <- getSetting "readelf command"
+       windres_path <- getSetting "windres command" SettingsWindresCommand
+       libtool_path <- getSetting "libtool command" SettingsLibtoolCommand
+       readelf_path <- getSetting "readelf command" SettingsReadelfCommand
 
        tmpdir <- getTemporaryDirectory
 
-       touch_path <- getSetting "touch command"
+       touch_path <- getSetting "touch command" SettingsTouchCommand
 
        let -- On Win32 we don't want to rely on #!/bin/perl, so we prepend
            -- a call to Perl to get the invocation of split.
@@ -304,7 +314,7 @@ initSysTools mbMinusB
            (split_prog,  split_args)
              | isWindowsHost = (perl_path,    [Option split_script])
              | otherwise     = (split_script, [])
-       mkdll_prog <- getSetting "dllwrap command"
+       mkdll_prog <- getSetting "dllwrap command" SettingsDllWrapCommand
        let mkdll_args = []
 
        -- cpp is derived from gcc on all platforms
@@ -313,15 +323,15 @@ initSysTools mbMinusB
 
 
        -- Other things being equal, as and ld are simply gcc
-       gcc_link_args_str <- getSetting "C compiler link flags"
+       gcc_link_args_str <- getSetting "C compiler link flags" SettingsCCompilerLinkFlags
        let   as_prog  = gcc_prog
              as_args  = gcc_args
              ld_prog  = gcc_prog
              ld_args  = gcc_args ++ map Option (words gcc_link_args_str)
 
        -- We just assume on command line
-       lc_prog <- getSetting "LLVM llc command"
-       lo_prog <- getSetting "LLVM opt command"
+       lc_prog <- getSetting "LLVM llc command" SettingsLlcCommand
+       lo_prog <- getSetting "LLVM opt command" SettingsOptCommand
 
        let platform = Platform {
                           platformArch = targetArch,
@@ -375,8 +385,7 @@ initSysTools mbMinusB
                     sOpt_l       = [],
                     sOpt_windres = [],
                     sOpt_lo      = [],
-                    sOpt_lc      = [],
-                    sPlatformConstants = platformConstants
+                    sOpt_lc      = []
              }
 
 -- returns a Unix-format path (relying on getBaseDir to do so too)
