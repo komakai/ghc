@@ -385,7 +385,8 @@ initSysTools mbMinusB
                     sOpt_l       = [],
                     sOpt_windres = [],
                     sOpt_lo      = [],
-                    sOpt_lc      = []
+                    sOpt_lc      = [],
+                    sPlatformConstants = platformConstants
              }
 
 -- returns a Unix-format path (relying on getBaseDir to do so too)
