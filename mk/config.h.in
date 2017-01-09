@@ -57,6 +57,9 @@
    significant byte first */
 #undef FLOAT_WORDS_BIGENDIAN
 
+/* GccExtraViaCOpts */
+#undef GccExtraViaCOpts
+
 /* Has visibility hidden */
 #undef HAS_VISIBILITY_HIDDEN
 
@@ -293,9 +296,39 @@
 /* Define to 1 if you have the `__mingw_vfprintf' function. */
 #undef HAVE___MINGW_VFPRINTF
 
+/* HaskellHaveGnuNonexecStack */
+#undef HaskellHaveGnuNonexecStack
+
+/* HaskellHaveIdentDirective */
+#undef HaskellHaveIdentDirective
+
+/* HaskellHaveSubsectionsViaSymbols */
+#undef HaskellHaveSubsectionsViaSymbols
+
+/* HaskellSectionTypeParam */
+#undef HaskellSectionTypeParam
+
+/* HaskellTargetArch */
+#undef HaskellTargetArch
+
+/* HaskellTargetOs */
+#undef HaskellTargetOs
+
 /* Define to 1 if C symbols have a leading underscore added by the compiler.
    */
 #undef LEADING_UNDERSCORE
+
+/* LdHasBuildId */
+#undef LdHasBuildId
+
+/* LdHasFilelist */
+#undef LdHasFilelist
+
+/* LdHasNoCompactUnwind */
+#undef LdHasNoCompactUnwind
+
+/* LdIsGNULd */
+#undef LdIsGNULd
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
@@ -365,91 +398,8 @@
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#undef TIME_WITH_SYS_TIME
-
-/* Define to 1 if we can use timer_create(CLOCK_PROCESS_CPUTIME_ID,...) */
-#undef USE_TIMER_CREATE
-
-/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
-   significant byte first (like Motorola and SPARC, unlike Intel). */
-#if defined AC_APPLE_UNIVERSAL_BUILD
-# if defined __BIG_ENDIAN__
-#  define WORDS_BIGENDIAN 1
-# endif
-#else
-# ifndef WORDS_BIGENDIAN
-#  undef WORDS_BIGENDIAN
-# endif
-#endif
-
-/* Enable large inode numbers on Mac OS X 10.5.  */
-#ifndef _DARWIN_USE_64_BIT_INODE
-# define _DARWIN_USE_64_BIT_INODE 1
-#endif
-
-/* Number of bits in a file offset, on hosts where this is settable. */
-#undef _FILE_OFFSET_BITS
-
-/* Define for large files, on AIX-style hosts. */
-#undef _LARGE_FILES
-
-/* ARM pre v6 */
-#undef arm_HOST_ARCH_PRE_ARMv6
-
-/* ARM pre v7 */
-#undef arm_HOST_ARCH_PRE_ARMv7
-
-/* Define to empty if `const' does not conform to ANSI C. */
-#undef const
-
-/* Define to `int' if <sys/types.h> does not define. */
-#undef pid_t
-
-/* Define to `unsigned int' if <sys/types.h> does not define. */
-#undef size_t
-
-/* Define as `fork' if `vfork' does not work. */
-#undef vfork
-
-/* WordSize */
-#undef WordSize
-
-/* Unregisterised */
-#undef UnregisterisedDefault
-
-/* HaskellHaveGnuNonexecStack */
-#undef HaskellHaveGnuNonexecStack
-
-/* HaskellHaveIdentDirective */
-#undef HaskellHaveIdentDirective
-
-/* HaskellHaveSubsectionsViaSymbols */
-#undef HaskellHaveSubsectionsViaSymbols
-
-/* HaskellSectionTypeParam */
-#undef HaskellSectionTypeParam
-
-/* HaskellTargetArch */
-#undef HaskellTargetArch
-
-/* HaskellTargetOs */
-#undef HaskellTargetOs
-
-/* GccExtraViaCOpts */
-#undef GccExtraViaCOpts
-
-/* LdHasNoCompactUnwind */
-#undef LdHasNoCompactUnwind
-
-/* LdHasBuildId */
-#undef LdHasBuildId
- 
-/* LdHasFilelist */
-#undef LdHasFilelist
-
-/* LdIsGNULd */
-#undef LdIsGNULd
+/* SettingsArCommand */
+#undef SettingsArCommand
 
 /* SettingsCCompilerCommand */
 #undef SettingsCCompilerCommand
@@ -496,3 +446,55 @@
 /* SettingsWindresCommand */
 #undef SettingsWindresCommand
 
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
+
+/* Define to 1 if we can use timer_create(CLOCK_PROCESS_CPUTIME_ID,...) */
+#undef USE_TIMER_CREATE
+
+/* Unregisterised */
+#undef UnregisterisedDefault
+
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+#  undef WORDS_BIGENDIAN
+# endif
+#endif
+
+/* Word size quoted */
+#undef WordSizeQuoted
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
+
+/* ARM pre v6 */
+#undef arm_HOST_ARCH_PRE_ARMv6
+
+/* ARM pre v7 */
+#undef arm_HOST_ARCH_PRE_ARMv7
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef pid_t
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t
+
+/* Define as `fork' if `vfork' does not work. */
+#undef vfork

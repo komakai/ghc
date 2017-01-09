@@ -259,6 +259,7 @@ AC_ARG_ENABLE(unregisterised,
 [Unregisterised="$UnregisterisedDefault"]
 )
 AC_SUBST(Unregisterised)
+AC_DEFINE_UNQUOTED([UnregisterisedDefault], ["$Unregisterised"], [Unregisterised])
 
 AC_ARG_WITH(hc,
 [AC_HELP_STRING([--with-hc=ARG],
@@ -841,6 +842,7 @@ AC_CHECK_SIZEOF(void *,             4)
 dnl for use in settings.in
 WordSize=$ac_cv_sizeof_void_p
 AC_SUBST(WordSize)
+AC_DEFINE_UNQUOTED([WordSizeQuoted], ["$WordSize"], [Word size quoted])
 
 dnl ** what are alignment constraints on various types
 FP_CHECK_ALIGNMENT(char)

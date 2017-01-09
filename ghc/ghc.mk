@@ -145,7 +145,11 @@ $(eval $(call build-prog,ghc,stage1,0))
 ifeq "$(GhcLib)" "YES"
 $(eval $(call build-package,ghc,stage2,1))
 else
+ifeq "$(ConfigureInteractiveEdition)$(InteractiveEdition)" "YES"
 $(eval $(call build-prog,ghc,stage2,1,YES))
+else
+$(eval $(call build-prog,ghc,stage2,1))
+endif
 ifeq "$(ConfigureAndroid)$(Android)" "YES"
 ghc_stage2_HC_OPTS += -fPIE
 endif

@@ -8,6 +8,7 @@ mkdir -p android-install/ghc/libraries
 
 cp inplace/lib/package.conf.d/* android-install/ghc/inplace/lib/package.conf.d
 cp inplace/lib/bin/*-alllink android-install/ghc/inplace/lib/bin
+cp inplace/lib/platformConstants.stage2 android-install/ghc/inplace/lib
 cp inplace/bin/*-alllink android-install/ghc/inplace/bin
 cp ghc/linkall/*.so android-install/ghc/ghc/linkall
 cp android-install.sh android-install

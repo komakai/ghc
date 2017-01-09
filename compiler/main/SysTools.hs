@@ -54,7 +54,7 @@ module SysTools (
  ) where
 
 #include "HsVersions.h"
-#include "../../ghcautoconf.h"
+#include "../../includes/ghcautoconf.h"
 
 import DriverPhases
 import Module
@@ -209,19 +209,19 @@ initSysTools mbMinusB
        mySettings <- return []
 #else
        settingsStr <- readFile settingsFile
-       platformConstantsStr <- readFile platformConstantsFile
        mySettings <- case maybeReadFuzzy settingsStr of
                      Just s ->
                          return s
                      Nothing ->
                          pgmError ("Can't parse " ++ show settingsFile)
+#endif
+       platformConstantsStr <- readFile platformConstantsFile
        platformConstants <- case maybeReadFuzzy platformConstantsStr of
                             Just s ->
                                 return s
                             Nothing ->
                                 pgmError ("Can't parse " ++
                                           show platformConstantsFile)
-#endif
        let getSetting key defval = case lookup key mySettings of
                             Just xs ->
                                 return $ case stripPrefix "$topdir" xs of
@@ -234,13 +234,12 @@ initSysTools mbMinusB
                                              xs
                             Nothing ->
                                 return defval
-           getBooleanSetting key defVal = case lookup key mySettings of
+           getBooleanSetting key defval = case lookup key mySettings of
                                    Just "YES" -> return True
                                    Just "NO" -> return False
                                    Just xs -> pgmError ("Bad value for " ++ show key ++ ": " ++ show xs)
-                                   Nothing ->
-                                return defval
-           readSetting key defVal = case lookup key mySettings of
+                                   Nothing -> return ( defval=="YES" )
+           readSetting key defval = case lookup key mySettings of
                              Just xs ->
                                  case maybeRead xs of
                                  Just v -> return v
@@ -252,7 +251,7 @@ initSysTools mbMinusB
        crossCompiling <- getBooleanSetting "cross compiling" "NO"
        targetArch <- readSetting "target arch" HaskellTargetArch
        targetOS <- readSetting "target os" HaskellTargetOs
-       targetWordSize <- readSetting "target word size" WordSize
+       targetWordSize <- readSetting "target word size" WordSizeQuoted
        targetUnregisterised <- getBooleanSetting "Unregisterised" UnregisterisedDefault
        targetHasGnuNonexecStack <- readSetting "target has GNU nonexec stack" HaskellHaveGnuNonexecStack
        targetHasIdentDirective <- readSetting "target has .ident directive" HaskellHaveIdentDirective
@@ -299,7 +298,7 @@ initSysTools mbMinusB
 
        windres_path <- getSetting "windres command" SettingsWindresCommand
        libtool_path <- getSetting "libtool command" SettingsLibtoolCommand
-       readelf_path <- getSetting "readelf command" SettingsReadelfCommand
+       readelf_path <- getSetting "readelf command" SettingsReadElfCommand
 
        tmpdir <- getTemporaryDirectory
 
@@ -963,8 +962,9 @@ runLink dflags args = do
   let (p,args0) = pgm_l dflags
       args1     = map Option (getOpts dflags opt_l)
       args2     = args0 ++ linkargs ++ args1 ++ args
-  mb_env <- getGccEnv args2
-  runSomethingResponseFile dflags ld_filter "Linker" p args2 mb_env
+      args3     = args2 ++ reverse (filter (isPrefixOf "-l" . showOpt) args2)
+  mb_env <- getGccEnv args3
+  runSomethingResponseFile dflags ld_filter "Linker" p args3 mb_env
   where
     ld_filter = case (platformOS (targetPlatform dflags)) of
                   OSSolaris2 -> sunos_ld_filter

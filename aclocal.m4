@@ -353,6 +353,13 @@ AC_DEFUN([FPTOOLS_SET_HASKELL_PLATFORM_VARS],
     AC_SUBST(HaskellHaveIdentDirective)
     AC_SUBST(HaskellSectionTypeParam)
     AC_SUBST(HaskellHaveGnuNonexecStack)
+    AC_DEFINE_UNQUOTED([HaskellTargetArch], ["$HaskellTargetArch"], [HaskellTargetArch])
+    AC_DEFINE_UNQUOTED([HaskellTargetOs], ["$HaskellTargetOs"], [HaskellTargetOs])
+    AC_DEFINE_UNQUOTED([HaskellHaveSubsectionsViaSymbols], ["$HaskellHaveSubsectionsViaSymbols"], [HaskellHaveSubsectionsViaSymbols])
+    AC_DEFINE_UNQUOTED([HaskellSectionTypeParam], ["$HaskellSectionTypeParam"], [HaskellSectionTypeParam])
+    AC_DEFINE_UNQUOTED([HaskellHaveIdentDirective], ["$HaskellHaveIdentDirective"], [HaskellHaveIdentDirective])
+    AC_DEFINE_UNQUOTED([HaskellHaveGnuNonexecStack], ["$HaskellHaveGnuNonexecStack"], [HaskellHaveGnuNonexecStack])
+
 ])
 
 
@@ -517,6 +524,23 @@ AC_DEFUN([FP_SETTINGS],
     AC_SUBST(SettingsTouchCommand)
     AC_SUBST(SettingsLlcCommand)
     AC_SUBST(SettingsOptCommand)
+    AC_DEFINE_UNQUOTED([SettingsCCompilerCommand], ["$SettingsCCompilerCommand"], [SettingsCCompilerCommand])
+    AC_DEFINE_UNQUOTED([SettingsHaskellCPPCommand], ["$SettingsHaskellCPPCommand"], [SettingsHaskellCPPCommand])
+    AC_DEFINE_UNQUOTED([SettingsHaskellCPPFlags], ["$SettingsHaskellCPPFlags"], [SettingsHaskellCPPFlags])
+    AC_DEFINE_UNQUOTED([SettingsCCompilerFlags], ["$SettingsCCompilerFlags"], [SettingsCCompilerFlags])
+    AC_DEFINE_UNQUOTED([SettingsCCompilerLinkFlags], ["$SettingsCCompilerLinkFlags"], [SettingsCCompilerLinkFlags])
+    AC_DEFINE_UNQUOTED([SettingsLdCommand], ["$SettingsLdCommand"], [SettingsLdCommand])
+    AC_DEFINE_UNQUOTED([SettingsLdFlags], ["$SettingsLdFlags"], [SettingsLdFlags])
+    AC_DEFINE_UNQUOTED([SettingsArCommand], ["$SettingsArCommand"], [SettingsArCommand])
+    AC_DEFINE_UNQUOTED([SettingsPerlCommand], ["$SettingsPerlCommand"], [SettingsPerlCommand])
+    AC_DEFINE_UNQUOTED([SettingsDllWrapCommand], ["$SettingsDllWrapCommand"], [SettingsDllWrapCommand])
+    AC_DEFINE_UNQUOTED([SettingsWindresCommand], ["$SettingsWindresCommand"], [SettingsWindresCommand])
+    AC_DEFINE_UNQUOTED([SettingsLibtoolCommand], ["$SettingsLibtoolCommand"], [SettingsLibtoolCommand])
+    AC_DEFINE_UNQUOTED([SettingsReadElfCommand], ["$SettingsReadElfCommand"], [SettingsReadElfCommand])
+    AC_DEFINE_UNQUOTED([SettingsTouchCommand], ["$SettingsTouchCommand"], [SettingsTouchCommand])
+    AC_DEFINE_UNQUOTED([SettingsLlcCommand], ["$SettingsLlcCommand"], [SettingsLlcCommand])
+    AC_DEFINE_UNQUOTED([SettingsOptCommand], ["$SettingsOptCommand"], [SettingsOptCommand])
+
 ])
 
 
@@ -998,6 +1022,7 @@ else
   LdHasBuildId=NO
 fi
 AC_SUBST([LdHasBuildId])
+AC_DEFINE_UNQUOTED([LdHasBuildId], ["$LdHasBuildId"], [LdHasBuildId])
 ])# FP_PROG_LD_BUILD_ID
 
 
@@ -1014,6 +1039,7 @@ else
   fp_cv_gnu_ld=no
 fi])
 AC_SUBST([LdIsGNULd], [`echo $fp_cv_gnu_ld | sed 'y/yesno/YESNO/'`])
+AC_DEFINE_UNQUOTED([LdIsGNULd], ["$LdIsGNULd"], [LdIsGNULd])
 ])# FP_PROG_LD_IS_GNU
 
 
@@ -1039,6 +1065,7 @@ else
   LdHasNoCompactUnwind=NO
 fi
 AC_SUBST([LdHasNoCompactUnwind])
+AC_DEFINE_UNQUOTED([LdHasNoCompactUnwind], ["$LdHasNoCompactUnwind"], [LdHasNoCompactUnwind])
 ])# FP_PROG_LD_NO_COMPACT_UNWIND
 
 
@@ -1071,6 +1098,7 @@ else
     LdHasFilelist=NO
 fi
 AC_SUBST([LdHasFilelist])
+AC_DEFINE_UNQUOTED([LdHasFilelist], ["$LdHasFilelist"], [LdHasFilelist])
 ])# FP_PROG_LD_FILELIST
 
 
@@ -1584,6 +1612,7 @@ AC_CACHE_CHECK([for extra options to pass gcc when compiling via C], [fp_cv_gcc_
   [])
 ])
 AC_SUBST([GccExtraViaCOpts],$fp_cv_gcc_extra_opts)
+AC_DEFINE_UNQUOTED([GccExtraViaCOpts], ["$GccExtraViaCOpts"], [GccExtraViaCOpts])
 ])
 
 

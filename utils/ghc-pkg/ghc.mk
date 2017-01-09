@@ -71,7 +71,12 @@ utils/ghc-pkg_dist-install_INSTALL_ALLLINK_INPLACE = YES
 
 utils/ghc-pkg_dist-install_MORE_HC_OPTS = $(GhcStage2HcOpts)
 
+ifeq "$(ConfigureInteractiveEdition)$(InteractiveEdition)" "YES"
 $(eval $(call build-prog,utils/ghc-pkg,dist-install,1,YES))
+else
+$(eval $(call build-prog,utils/ghc-pkg,dist-install,1))
+endif
+
 ifeq "$(ConfigureAndroid)$(Android)" "YES"
 utils/ghc-pkg_dist-install_HC_OPTS += -fPIE
 endif
