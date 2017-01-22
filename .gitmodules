@@ -83,10 +83,12 @@
 	path = libraries/process
 	url = ../packages/process.git
 	ignore = untracked
+	branch = v1.2.3.0-interactive-edition
 [submodule "libraries/unix"]
 	path = libraries/unix
 	url = ../packages/unix.git
 	ignore = untracked
+	branch = v2.7.1.0-interactive-edition
 [submodule "libraries/parallel"]
 	path = libraries/parallel
 	url = ../packages/parallel.git

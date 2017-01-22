@@ -962,7 +962,8 @@ runLink dflags args = do
   let (p,args0) = pgm_l dflags
       args1     = map Option (getOpts dflags opt_l)
       args2     = args0 ++ linkargs ++ args1 ++ args
-      args3     = args2 ++ reverse (filter (isPrefixOf "-l" . showOpt) args2)
+      isjoin    = elem "-r" (map showOpt args2)
+      args3     = args2 ++ (if isjoin then [] else reverse (filter (isPrefixOf "-l" . showOpt) args2))
   mb_env <- getGccEnv args3
   runSomethingResponseFile dflags ld_filter "Linker" p args3 mb_env
   where

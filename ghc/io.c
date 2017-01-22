@@ -16,27 +16,61 @@ char* get_input(char* strStatus)
 
 #ifdef ANDROID
 
-ssize_t getline(char **lineptr, size_t *n, FILE *stream)
+#define NEWLINE '\n'
+#define NULLCHAR '\0'
+
+ssize_t getline(char **pLine, size_t *pSize, FILE *pStream)
 {
-    char *ptr;
-    ptr = fgetln(stream, n);
-    if (ptr == NULL) {
-        return -1;
-    }
-    /* Free the original ptr */
-    if (*lineptr != NULL) free(*lineptr);
-    /* Add one more space for '\0' */
-    size_t len = n[0] + 1;
-    /* Update the length */
-    n[0] = len;
-    /* Allocate a new buffer */
-    *lineptr = malloc(len);
-    /* Copy over the string */
-    memcpy(*lineptr, ptr, len-1);
-    /* Write the NULL character */
-    (*lineptr)[len-1] = '\0';
-    /* Return the length of the new buffer */
-    return len;
+	return getDelimiter(pLine, pSize, NEWLINE, pStream);
+}
+
+#define DEFAULT_LINE_LENGTH 128
+#define ERROR -1
+
+ssize_t getDelimiter(char **pstrLine, size_t *pnSize, int cDelimiter, FILE *pStream)
+{
+	int nIndex = 0;
+	int chr;
+
+	if (pstrLine == NULL || pnSize == NULL || pStream == NULL) {
+		return ERROR;
+	}
+
+	if (*pstrLine == NULL) {
+		*pstrLine = malloc(DEFAULT_LINE_LENGTH);
+		if (*pstrLine == NULL) {
+			return ERROR;
+		}
+		*pnSize = DEFAULT_LINE_LENGTH;
+	}
+
+	while ((chr = getc(pStream)) != EOF) {
+		if (nIndex >= *pnSize) {
+			*pstrLine = realloc(*pstrLine, *pnSize + DEFAULT_LINE_LENGTH);
+			if (*pstrLine == NULL) {
+				return ERROR;
+			}
+			*pnSize += DEFAULT_LINE_LENGTH;
+		}
+		(*pstrLine)[nIndex++] = chr;
+
+		if (chr == cDelimiter) {
+			break;
+		}
+	}
+
+	if (nIndex >= *pnSize)
+	{
+		*pstrLine = realloc(*pstrLine, *pnSize + DEFAULT_LINE_LENGTH);
+		if (*pstrLine == NULL) {
+			return ERROR;
+		}
+		*pnSize += DEFAULT_LINE_LENGTH;
+	}
+
+	(*pstrLine)[nIndex++] = NULLCHAR;
+
+	return (chr == EOF && (nIndex - 1) == 0) ? ERROR : (nIndex - 1);
 }
 
 #endif
