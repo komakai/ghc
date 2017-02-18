@@ -57,7 +57,11 @@ HsInt insertSymbol(pathchar* obj_name, char* key, void* data)
 /* lookup a symbol in the hash table */
 void *lookupSymbol( char *lbl )
 {
+#if defined(darwin_HOST_OS)
+       return dlsym(dl_prog_handle, lbl+1);
+#else
        return dlsym(dl_prog_handle, lbl);
+#endif
 }
 #endif
 
