@@ -73,7 +73,7 @@ Give executable permission to the wrapper scripts:
 
 ### Installing a Bootstrapping GHC
 
-Copy ghc-7.8.2-i386-unknown-linux-deb7.tar.xz to Downloads folder
+Download GHC version 7.8.2 (32-bit) from http://www.telepathix.net/haskell/ghc-7.8.2-i386-unknown-linux-deb7.tar.xz
 Untar from command-line (archive manager will fail):  
 `tar xf '/home/giles/Downloads/ghc-7.8.2-i386-unknown-linux-deb7.tar.xz'`  
 Change into ghc-7.8.2 directory:  
