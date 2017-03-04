@@ -73,13 +73,13 @@ Give executable permission to the wrapper scripts:
 
 ### Installing a Bootstrapping GHC
 
-Download GHC version 7.8.2 (32-bit) from http://www.telepathix.net/haskell/ghc-7.8.2-i386-unknown-linux-deb7.tar.xz
+Download GHC version 7.8.2 (32-bit) from http://www.telepathix.net/haskell/ghc-7.8.2-i386-unknown-linux-deb7.tar.xz  
 Untar from command-line (archive manager will fail):  
 `tar xf '/home/giles/Downloads/ghc-7.8.2-i386-unknown-linux-deb7.tar.xz'`  
 Change into ghc-7.8.2 directory:  
-`cd ghc-7.8.2`
+`cd ghc-7.8.2`  
 Run configure with the 32-bit gcc wrapper:  
-`./configure --with-gcc=/usr/bin/gcc32 --with-ld=/usr/bin/ld32`
+`./configure --with-gcc=/usr/bin/gcc32 --with-ld=/usr/bin/ld32`  
 Install:  
 `sudo make install`
 
