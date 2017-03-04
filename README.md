@@ -6,21 +6,22 @@ This is the Glasgow Haskell Compiler Android/iOS Fork - for details of the Glasg
 
 ### Environment Setup
 
-Install 64-bit Ubuntu 2GB of RAM
-(If running VMware make sure to `sudo apt-get install open-vm-tools-desktop`)
-Run Software Updater
-Install Chrome
+Install 64-bit Ubuntu 2GB of RAM  
+(If running VMware make sure to `sudo apt-get install open-vm-tools-desktop`)  
+Run Software Updater  
+Install Chrome  
+Install necessary dependencies:  
 `sudo apt-get install libc6-i386 libc6-dev-i386 git gcc autoconf libffi-dev:i386 libffi6:i386 libncurses5:i386 libncurses5-dev:i386 libgmp3-dev:i386`
 
 ### Create Compiler/Linker Wrapper Scripts
 
-Create a 32-bit wrapper around gcc 
+Create a 32-bit wrapper around gcc:  
 `sudo nano /usr/bin/gcc32`
 ```
 #!/bin/bash
 exec "/usr/bin/gcc" -m32 ${1+"$@"}
 ```
-Create a 32-bit wrapper around ld
+Create a 32-bit wrapper around ld:  
 `sudo nano /usr/bin/ld32`
 ```
 #!/bin/bash
@@ -66,21 +67,20 @@ else
 fi
 ```
 
-Give executable permission to the wrapper scripts
-
-`sudo chmod +x /usr/bin/gcc32`
-`sudo chmod +x /usr/bin/ld32`
+Give executable permission to the wrapper scripts:  
+`sudo chmod +x /usr/bin/gcc32`  
+`sudo chmod +x /usr/bin/ld32`  
 
 ### Installing a Bootstrapping GHC
 
 Copy ghc-7.8.2-i386-unknown-linux-deb7.tar.xz to Downloads folder
-Untar from command-line (archive manager will fail)
-`tar xf '/home/giles/Downloads/ghc-7.8.2-i386-unknown-linux-deb7.tar.xz'`
-Change into ghc-7.8.2
+Untar from command-line (archive manager will fail):  
+`tar xf '/home/giles/Downloads/ghc-7.8.2-i386-unknown-linux-deb7.tar.xz'`  
+Change into ghc-7.8.2 directory:  
 `cd ghc-7.8.2`
-Run configure with the 32-bit gcc wrapper
+Run configure with the 32-bit gcc wrapper:  
 `./configure --with-gcc=/usr/bin/gcc32 --with-ld=/usr/bin/ld32`
-Install
+Install:  
 `sudo make install`
 
 Edit /usr/local/bin/ghc
@@ -97,8 +97,7 @@ exec "$executablename" -B"$topdir" ${1+"$@"} -optc-m32 -opta-m32
 
 ### Checking out the Source
 
-Create .gitconfig and add the following rules
-
+Create .gitconfig and add the following rules:  
 ```
 [url "https://github.com/ghc/libffi-tarballs.git"]
 	insteadOf = https://github.com/komakai/libffi-tarballs.git
@@ -116,11 +115,10 @@ Create .gitconfig and add the following rules
 	insteadOf = https://github.com/komakai/packages/process.git
 ```
 
-Clone the git repository together with submodules
-	
+Clone the git repository together with submodules:  
 `git clone --recursive https://github.com/komakai/ghc.git ghc-komakai`
 
-Switch to the ghc-7.10-interactive-edition branch
+Switch to the ghc-7.10-interactive-edition branch:  
 `cd ghc-komakai`
 `git fetch origin`
 `git checkout -b ghc-7.10-interactive-edition origin/ghc-7.10-interactive-edition`
@@ -180,42 +178,42 @@ else
 fi
 ```
 
-Give executable permission to the wrapper script
-
+Give executable permission to the wrapper script:  
 `chmod +x $ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ld-wrap`
 
 ### Building
 
 Copy mk/build-interactive-edition.mk to mk/build.mk
 
-Build
-`./boot`
-`./configure --with-gcc=/usr/bin/gcc32 --with-ld=/usr/bin/ld32 -build=i386-unknown-linux -host=i386-unknown-linux STAGE=1`
-`./configure  --with-gcc=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-gcc --with-ld=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ld-wrap --with-nm=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-nm --with-ar=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ar --with-ranlib=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ranlib --build=i386-unknown-linux --host=arm-unknown-linux CFLAGS="-w -I$ANDROID_NDK/platforms/android-9/arch-arm/usr/include -march=armv5te -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -DANDROID -DINTERACTIVE_EDITION -funwind-tables -fstack-protector -Wno-psabi -mtune=xscale -msoft-float -mthumb -Os -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64" LDFLAGS="--sysroot=$ANDROID_NDK/platforms/android-9/arch-arm -lgcc -no-canonical-prefixes -Wl,-z,noexecstack -lc -lm -llog"  CPP="$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-gcc -E" CPPFLAGS="-I$ANDROID_NDK/platforms/android-9/arch-arm/usr/include -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -DANDROID -DINTERACTIVE_EDITION" STAGE=2`
-`make 2>&1 | tee build.log`
+Build  
+`./boot`  
+`./configure --with-gcc=/usr/bin/gcc32 --with-ld=/usr/bin/ld32 -build=i386-unknown-linux -host=i386-unknown-linux STAGE=1`  
+`./configure  --with-gcc=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-gcc --with-ld=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ld-wrap --with-nm=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-nm --with-ar=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ar --with-ranlib=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ranlib --build=i386-unknown-linux --host=arm-unknown-linux CFLAGS="-w -I$ANDROID_NDK/platforms/android-9/arch-arm/usr/include -march=armv5te -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -DANDROID -DINTERACTIVE_EDITION -funwind-tables -fstack-protector -Wno-psabi -mtune=xscale -msoft-float -mthumb -Os -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64" LDFLAGS="--sysroot=$ANDROID_NDK/platforms/android-9/arch-arm -lgcc -no-canonical-prefixes -Wl,-z,noexecstack -lc -lm -llog"  CPP="$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-gcc -E" CPPFLAGS="-I$ANDROID_NDK/platforms/android-9/arch-arm/usr/include -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -DANDROID -DINTERACTIVE_EDITION" STAGE=2`  
+`make 2>&1 | tee build.log`  
 
 ### Installing on an Android Device
 
-Prepare the files for install
-`./build-android-install.sh`
+Prepare the files for install:  
+`./build-android-install.sh`  
 
 Obtain a copy of adb (Android Debug Bridge) - for example by installing the Android SDK command line tools (https://developer.android.com/studio/index.html very bottom of the page)
 Make sure adb is in the system path. Attach the device to install on with USB cable (you will need to have developer mode and USB debugging enabled)
-`cd android-install`
-`./android-install.sh /data/local/tmp`
+`cd android-install`  
+`./android-install.sh /data/local/tmp`  
 
 ### Running
-`adb shell`
-`cd /data/local/tmp/ghc`
-`inplace/bin/ghc-stage2-alllink --interactive`
+`adb shell`  
+`cd /data/local/tmp/ghc`  
+`inplace/bin/ghc-stage2-alllink --interactive`  
 
-Enter the following commands
-`:load test/qsort.hs`
-`main`
+Enter the following commands  
+`:load test/qsort.hs`  
+`main`  
 
 You should see some output !!!
 [6,18,23,71]
 
-To exit enter
-`:quit`
+To exit enter  
+`:quit`  
 
+Congratulations - you have Haskell running on Android
