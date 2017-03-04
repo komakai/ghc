@@ -1,129 +1,221 @@
-The Glasgow Haskell Compiler
-============================
+# Glasgow Haskell Compiler Android/iOS Fork
 
-[![Build Status](https://api.travis-ci.org/ghc/ghc.svg?branch=master)](http://travis-ci.org/ghc/ghc)
+This is the Glasgow Haskell Compiler Android/iOS Fork - for details of the Glasgow Haskell Compiler see README_GHC.md
 
-This is the source tree for [GHC][1], a compiler and interactive
-environment for the Haskell functional programming language.
+## How-to Build For Android
 
-For more information, visit [GHC's web site][1].
+### Environment Setup
 
-Information for developers of GHC can be found on the [GHC Trac][2].
+Install 64-bit Ubuntu 2GB of RAM
+(If running VMware make sure to `sudo apt-get install open-vm-tools-desktop`)
+Run Software Updater
+Install Chrome
+`sudo apt-get install libc6-i386 libc6-dev-i386 git gcc autoconf libffi-dev:i386 libffi6:i386 libncurses5:i386 libncurses5-dev:i386 libgmp3-dev:i386`
 
+### Create Compiler/Linker Wrapper Scripts
 
-Getting the Source
-==================
+Create a 32-bit wrapper around gcc 
+`sudo nano /usr/bin/gcc32`
+```
+#!/bin/bash
+exec "/usr/bin/gcc" -m32 ${1+"$@"}
+```
+Create a 32-bit wrapper around ld
+`sudo nano /usr/bin/ld32`
+```
+#!/bin/bash
+args=( "$@" )
+usegcc=yes
+if [[ $# -eq 1 ]] && [[ $1 =~ ^@ ]]
+then
+  readarray a < <( cat ${1#?} | sed 's/\(^"\|"$\)//g' )
+  set -- ${a[*]}
+fi
 
-There are two ways to get a source tree:
+if [[ $1 == --version ]] || [[ $1 == -Wl,--version ]]
+then
+  exec "/usr/bin/ld" --version
+  exit 0
+fi
+if [[ $1 == -v ]] || [[ $1 == -Wl,-v ]]
+then
+  exec "/usr/bin/ld" -v
+  exit 0
+fi
+if [[ $1 == --help ]] || [[ $1 == -Wl,--help ]]
+then
+  exec "/usr/bin/ld" --help
+  exit 0
+fi
 
- 1. *Download source tarballs*
+while (( "$#" ));
+do
+  if [[ $1 == -r ]]
+  then
+    usegcc=no
+    break
+  fi
+  shift
+done
 
-  Download the GHC source distribution:
+if [ "$usegcc" == "yes" ];
+then
+  exec "/usr/bin/gcc32" "${args[@]}"
+else
+  exec "/usr/bin/ld" -melf_i386 "$@"
+fi
+```
 
-        ghc-<version>-src.tar.bz2
+Give executable permission to the wrapper scripts
 
-  which contains GHC itself and the "boot" libraries.
+`sudo chmod +x /usr/bin/gcc32`
+`sudo chmod +x /usr/bin/ld32`
 
- 2. *Check out the source code from git*
+### Installing a Bootstrapping GHC
 
-        $ git clone --recursive git://git.haskell.org/ghc.git
+Copy ghc-7.8.2-i386-unknown-linux-deb7.tar.xz to Downloads folder
+Untar from command-line (archive manager will fail)
+`tar xf '/home/giles/Downloads/ghc-7.8.2-i386-unknown-linux-deb7.tar.xz'`
+Change into ghc-7.8.2
+`cd ghc-7.8.2`
+Run configure with the 32-bit gcc wrapper
+`./configure --with-gcc=/usr/bin/gcc32 --with-ld=/usr/bin/ld32`
+Install
+`sudo make install`
 
-  Note: cloning GHC from Github requires a special setup. See [Getting a GHC
-  repository from Github] [7].
+Edit /usr/local/bin/ghc
+Change the final line from
+```
+exec "$executablename" -B"$topdir" ${1+"$@"}
+```
+to
+```
+exec "$executablename" -B"$topdir" ${1+"$@"} -optc-m32 -opta-m32
+```
 
-  **DO NOT submit pull request directly to the github repo.**
-  *See the GHC team's working conventions re [how to contribute a patch to GHC](http://ghc.haskell.org/trac/ghc/wiki/WorkingConventions/FixingBugs "ghc.haskell.org/trac/ghc/wiki/WorkingConventions/FixingBug").*
+`sudo apt install happy alex`
 
+### Checking out the Source
 
-Building & Installing
-=====================
+Create .gitconfig and add the following rules
 
-For full information on building GHC, see the [GHC Building Guide] [3].
-Here follows a summary - if you get into trouble, the Building Guide
-has all the answers.
+```
+[url "https://github.com/ghc/libffi-tarballs.git"]
+	insteadOf = https://github.com/komakai/libffi-tarballs.git
+[url "https://github.com/ghc/packages-"]
+	insteadOf = https://github.com/komakai/packages/
+[url "https://github.com/ghc/nofib.git"]
+	insteadOf = https://github.com/komakai/nofib.git
+[url "https://github.com/ghc/haddock.git"]
+	insteadOf = https://github.com/komakai/haddock.git
+[url "https://github.com/ghc/hsc2hs.git"]
+	insteadOf = https://github.com/komakai/hsc2hs.git
+[url "https://github.com/komakai/packages-unix.git"]
+	insteadOf = https://github.com/komakai/packages/unix.git
+[url "https://github.com/komakai/packages-process.git"]
+	insteadOf = https://github.com/komakai/packages/process.git
+```
 
-Before building GHC you may need to install some other tools and
-libraries.  See, [Setting up your system for building GHC] [8].
+Clone the git repository together with submodules
+	
+`git clone --recursive https://github.com/komakai/ghc.git ghc-komakai`
 
-*NB.* In particular, you need [GHC] [1] installed in order to build GHC,
-because the compiler is itself written in Haskell.  You also need
-[Happy] [4], [Alex] [5], and [Cabal] [9].  For instructions on how
-to port GHC to a new platform, see the [GHC Building Guide] [3].
+Switch to the ghc-7.10-interactive-edition branch
+`cd ghc-komakai`
+`git fetch origin`
+`git checkout -b ghc-7.10-interactive-edition origin/ghc-7.10-interactive-edition`
+`git submodule update`
 
-For building library documentation, you'll need [Haddock] [6].  To build
-the compiler documentation, you need [Sphinx](http://www.sphinx-doc.org/)
-and Xelatex (only for PDF output).
+### Setting up Android Build Tools
 
-**Quick start**: the following gives you a default build:
+Download and install Android NDK
+Set up ANDROID_NDK and ANDROID_NDK_TOOLCHAIN environment variables in .bashrc adding something similar to these lines:
+```
+export ANDROID_NDK=/home/giles/android-ndk-r13b
+export ANDROID_NDK_TOOLCHAIN=arm-linux-androideabi-4.9/prebuilt/linux-x86_64
+```
 
-    $ ./boot
-    $ ./configure
-    $ make         # can also say 'make -jX' for X number of jobs
-    $ make install
+Create a wrapper around the NDK linker called arm-linux-androideabi-ld-wrap
+```
+#!/bin/bash
+args=( "$@" )
+usegcc=yes
+if [[ $# -eq 1 ]] && [[ $1 =~ ^@ ]]
+then
+  readarray a < <( cat ${1#?} | sed 's/\(^"\|"$\)//g' )
+  set -- ${a[*]}
+fi
 
-  On Windows, you need an extra repository containing some build tools.
-  These can be downloaded for you by configure. This only needs to be done once by running:
+if [[ $1 == --version ]] || [[ $1 == -Wl,--version ]]
+then
+  exec "$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ld" --version
+  exit 0
+fi
+if [[ $1 == -v ]] || [[ $1 == -Wl,-v ]]
+then
+  exec "$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ld" -v
+  exit 0
+fi
+if [[ $1 == --help ]] || [[ $1 == -Wl,--help ]]
+then
+  exec "$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ld" --help
+  exit 0
+fi
 
-    $ ./configure --enable-tarballs-autodownload
+while (( "$#" ));
+do
+  if [[ $1 == -r ]]
+  then
+    usegcc=no
+    break
+  fi
+  shift
+done
 
-(NB: **Do you have multiple cores? Be sure to tell that to `make`!** This can
-save you hours of build time depending on your system configuration, and is
-almost always a win regardless of how many cores you have. As a simple rule,
-you should have about N+1 jobs, where `N` is the amount of cores you have.)
+if [ "$usegcc" == "yes" ];
+then
+  exec "$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-gcc" "${args[@]}"
+else
+  exec "$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ld" "$@"
+fi
+```
 
-The `./boot` step is only necessary if this is a tree checked out
-from git.  For source distributions downloaded from [GHC's web site] [1],
-this step has already been performed.
+Give executable permission to the wrapper script
 
-These steps give you the default build, which includes everything
-optimised and built in various ways (eg. profiling libs are built).
-It can take a long time.  To customise the build, see the file `HACKING`.
+`chmod +x $ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ld-wrap`
 
-Filing bugs and feature requests
-================================
+### Building
 
-If you've encountered what you believe is a bug in GHC, or you'd like
-to propose a feature request, please let us know! Submit a ticket in
-our [bug tracker] [10] and we'll be sure to look into it. Remember:
-**Filing a bug is the best way to make sure your issue isn't lost over
-time**, so please feel free.
+Copy mk/build-interactive-edition.mk to mk/build.mk
 
-If you're an active user of GHC, you may also be interested in joining
-the [glasgow-haskell-users] [11] mailing list, where developers and
-GHC users discuss various topics and hang out.
+Build
+`./boot`
+`./configure --with-gcc=/usr/bin/gcc32 --with-ld=/usr/bin/ld32 -build=i386-unknown-linux -host=i386-unknown-linux STAGE=1`
+`./configure  --with-gcc=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-gcc --with-ld=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ld-wrap --with-nm=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-nm --with-ar=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ar --with-ranlib=$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-ranlib --build=i386-unknown-linux --host=arm-unknown-linux CFLAGS="-w -I$ANDROID_NDK/platforms/android-9/arch-arm/usr/include -march=armv5te -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -DANDROID -DINTERACTIVE_EDITION -funwind-tables -fstack-protector -Wno-psabi -mtune=xscale -msoft-float -mthumb -Os -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64" LDFLAGS="--sysroot=$ANDROID_NDK/platforms/android-9/arch-arm -lgcc -no-canonical-prefixes -Wl,-z,noexecstack -lc -lm -llog"  CPP="$ANDROID_NDK/toolchains/$ANDROID_NDK_TOOLCHAIN/bin/arm-linux-androideabi-gcc -E" CPPFLAGS="-I$ANDROID_NDK/platforms/android-9/arch-arm/usr/include -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -DANDROID -DINTERACTIVE_EDITION" STAGE=2`
+`make 2>&1 | tee build.log`
 
-Hacking & Developing GHC
-========================
+### Installing on an Android Device
 
-Once you've filed a bug, maybe you'd like to fix it yourself? That
-would be great, and we'd surely love your company! If you're looking
-to hack on GHC, check out the guidelines in the `HACKING.md` file in
-this directory - they'll get you up to speed quickly.
+Prepare the files for install
+`./build-android-install.sh`
 
-Contributors & Acknowledgements
-===============================
+Obtain a copy of adb (Android Debug Bridge) - for example by installing the Android SDK command line tools (https://developer.android.com/studio/index.html very bottom of the page)
+Make sure adb is in the system path. Attach the device to install on with USB cable (you will need to have developer mode and USB debugging enabled)
+`cd android-install`
+`./android-install.sh /data/local/tmp`
 
-GHC in its current form wouldn't exist without the hard work of
-[its many contributors] [12]. Over time, it has grown to include the
-efforts and research of many institutions, highly talented people, and
-groups from around the world. We'd like to thank them all, and invite
-you to join!
+### Running
+`adb shell`
+`cd /data/local/tmp/ghc`
+`inplace/bin/ghc-stage2-alllink --interactive`
 
-  [1]:  http://www.haskell.org/ghc/            "www.haskell.org/ghc/"
-  [2]:  http://ghc.haskell.org/trac/ghc    "ghc.haskell.org/trac/ghc"
-  [3]:  http://ghc.haskell.org/trac/ghc/wiki/Building
-          "ghc.haskell.org/trac/ghc/wiki/Building"
-  [4]:  http://www.haskell.org/happy/          "www.haskell.org/happy/"
-  [5]:  http://www.haskell.org/alex/           "www.haskell.org/alex/"
-  [6]:  http://www.haskell.org/haddock/        "www.haskell.org/haddock/"
-  [7]: https://ghc.haskell.org/trac/ghc/wiki/Building/GettingTheSources#GettingaGHCrepositoryfromGitHub
-          "https://ghc.haskell.org/trac/ghc/wiki/Building/GettingTheSources#GettingaGHCrepositoryfromGitHub"
-  [8]:  http://ghc.haskell.org/trac/ghc/wiki/Building/Preparation
-          "http://ghc.haskell.org/trac/ghc/wiki/Building/Preparation"
-  [9]:  http://www.haskell.org/cabal/          "http://www.haskell.org/cabal/"
-  [10]: http://ghc.haskell.org/trac/ghc/
-          "http://ghc.haskell.org/trac/ghc/"
-  [11]: http://www.haskell.org/pipermail/glasgow-haskell-users/
-          "http://www.haskell.org/pipermail/glasgow-haskell-users/"
-  [12]: http://ghc.haskell.org/trac/ghc/wiki/TeamGHC
-          "http://ghc.haskell.org/trac/ghc/wiki/TeamGHC"
+Enter the following commands
+`:load test/qsort.hs`
+`main`
+
+You should see some output !!!
+[6,18,23,71]
+
+To exit enter
+`:quit`
+
