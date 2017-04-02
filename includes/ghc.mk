@@ -218,6 +218,7 @@ $$(includes_GHCCONSTANTS_HASKELL_TYPE_STAGE$1): $(deriveConstants_INPLACE) | $$(
 $$(includes_GHCCONSTANTS_HASKELL_VALUE_STAGE$1): $(deriveConstants_INPLACE) | $$(dir $$@)/.
 	mkdir -p $$(dir $$@)
 	$$< --gen-haskell-value -o $$@ --tmpdir $$(dir $$@) $$(DERIVE_CONSTANTS_FLAGS_STAGE$1)
+	"$$(CP)" $$@ inplace/lib/platformConstants.stage$1
 
 $$(includes_GHCCONSTANTS_HASKELL_WRAPPERS_STAGE$1): $(deriveConstants_INPLACE) | $$(dir $$@)/.
 	mkdir -p $$(dir $$@)

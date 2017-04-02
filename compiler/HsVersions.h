@@ -20,13 +20,7 @@ you will screw up the layout where they are used in case expressions!
  * ghcconfig.h, because that will include ghcplatform.h which has the
  * wrong platform settings for the compiler (it has the platform
  * settings for the target plat instead). */
-#if STAGE == 1
-#include "../includes/stage1/ghcautoconf.h"
-#elif STAGE == 2
-#include "../includes/stage1/ghcautoconf.h"
-#else
-#error "Invalid STAGE !!!"
-#endif
+#include "../includes/ghcautoconf.h"
 
 #define GLOBAL_VAR(name,value,ty)  \
 {-# NOINLINE name #-};             \
