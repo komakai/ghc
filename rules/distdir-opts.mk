@@ -19,6 +19,16 @@ ifeq "$3" ""
 $$(error Stage not given for distdir-opts $1 $2)
 endif
 
+# There appears to have at some point been confusion over the meaning of "stage"
+# in some places it refers to the stage of GHC that is being used and in others
+# the stage of GHC being build. Here we are passed in the stage being used but
+# actually we are more interested in the stage being built which we put in variable TS
+ifeq "$3" "0"
+$3_TS = 1
+else
+$3_TS = 2
+endif
+
 ifeq "$3" "0"
 # This is a bit of a hack.
 # If we are compiling something with the bootstrapping compiler on
@@ -39,13 +49,13 @@ ifneq ($$(strip $$($1_$2_DEP_INCLUDE_DIRS_SINGLE_QUOTED)),)
 $1_$2_CC_INC_FLAGS := $$(subst $$(space)',$$(space)$$($1_$2_DEP_INCLUDE_DIRS_FLAG)',$$(space)$$($1_$2_DEP_INCLUDE_DIRS_SINGLE_QUOTED))
 endif
 
-# The CONF_CC_OPTS_STAGE$3 options are what we use to get gcc to
+# The CONF_CC_OPTS_STAGE$$(TS) options are what we use to get gcc to
 # behave correctly, but they are specific to the gcc that we are using.
 # If GHC is compiling C code then it will take care of that for us,
 # and in the case of the stage 0 compiler it may be using a different
 # gcc, so we don't want to use our gcc-specific options.
 $1_$2_DIST_GCC_CC_OPTS = \
- $$(CONF_CC_OPTS_STAGE$3) \
+ $$(CONF_CC_OPTS_STAGE$$($3_TS)) \
  $$($1_$2_DIST_CC_OPTS)
 
 $1_$2_DIST_CC_OPTS = \
@@ -64,12 +74,20 @@ ifneq ($$(strip $$($1_$2_DEP_LIB_DIRS_SINGLE_QUOTED)),)
 $1_$2_DIST_LD_LIB_DIRS := $$(subst $$(space)',$$(space)-L',$$(space)$$($1_$2_DEP_LIB_DIRS_SINGLE_QUOTED))
 endif
 
+# rather than trying to work out where the gmp dependency is being set we just
+# filter it out
+ifeq "$$($3_TS)" "2"
+ifeq "$$(INTEGER_LIBRARY)" "integer-simple"
+$1_$2_DEP_EXTRA_LIBS_EXCLUDE = gmp
+endif
+endif
+
 $1_$2_DIST_LD_OPTS = \
  $$(SRC_LD_OPTS) \
  $$($1_LD_OPTS) \
  $$($1_$2_LD_OPTS) \
  $$($1_$2_DIST_LD_LIB_DIRS) \
- $$(foreach opt,$$($1_$2_DEP_EXTRA_LIBS),-l$$(opt)) \
+ $$(foreach opt,$$(filter-out $$($1_$2_DEP_EXTRA_LIBS_EXCLUDE),$$($1_$2_DEP_EXTRA_LIBS)),-l$$(opt)) \
  $$($1_$2_DEP_LD_OPTS)
 
 # c.f. Cabal's Distribution.Simple.PreProcess.ppHsc2hs
@@ -83,12 +101,12 @@ $1_$2_HSC2HS_LD_OPTS:=$$(shell for i in $$($1_$2_DIST_LD_OPTS); do echo \'--lfla
 endif
 
 $1_$2_ALL_HSC2HS_OPTS = \
- '--cc=$$(CC_STAGE$3)' \
- '--ld=$$(CC_STAGE$3)' \
+ '--cc=$$(CC_STAGE$$($3_TS))' \
+ '--ld=$$(LD_STAGE$$($3_TS))' \
  $$(CONF_HSC2HS_OPTS) \
  $$(SRC_HSC2HS_OPTS) \
- $$(SRC_HSC2HS_OPTS_STAGE$3) \
- --cflag=-D__GLASGOW_HASKELL__=$$(if $$(filter 0,$3),$$(GhcCanonVersion),$$(ProjectVersionInt)) \
+ $$(SRC_HSC2HS_OPTS_STAGE$$($3_TS)) \
+ --cflag=-D__GLASGOW_HASKELL__=$$(if $$(filter 0,$$($3_TS)),$$(GhcCanonVersion),$$(ProjectVersionInt)) \
  $$($1_$2_HSC2HS_CC_OPTS) \
  $$($1_$2_HSC2HS_LD_OPTS) \
  --cflag=-I$1/$2/build/autogen \

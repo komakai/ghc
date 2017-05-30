@@ -195,18 +195,7 @@ initSysTools mbMinusB
 #else
 #error "Invalid STAGE !!!"
 #endif
-
-       -- Basically we want the stage2 file but 'ghc-stage1 --info' and 'ghc-stage1 --version' may be
-       -- invoked while preparing to build stage2, before platformConstants.stage2 has been created.
-       -- To prevent an error occuring in these cases we just use the stage1 file if the stage2 file doesn't exist
-           platformConstantsFileStage1 = top_dir </> "platformConstants.stage1"
-           platformConstantsFileStage2 = top_dir </> "platformConstants.stage2"
-
-       existsPlatformConstantsFileStage2 <- doesFileExist platformConstantsFileStage2
-
-       let
-           platformConstantsFile = if existsPlatformConstantsFileStage2 then platformConstantsFileStage2 else platformConstantsFileStage1
-
+           platformConstantsFile = top_dir </> "platformConstants.stage2"
            installed :: FilePath -> FilePath
            installed file = top_dir </> file
 

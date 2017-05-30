@@ -58,13 +58,17 @@ endif
 
 ifneq "$$($1_$2_NOT_NEEDED)" "YES"
 $$(eval $$(call build-prog-helper,$1,$2,$3,$4))
+
+ifneq "$$($1_$2_STAGE_OVERRIDE)" ""
+$1_$2_HC_OPTS += -DSTAGE=$$($1_$2_STAGE_OVERRIDE) -optc-DSTAGE=$$($1_$2_STAGE_OVERRIDE)
+else
 ifeq "$3" "0"
 $1_$2_HC_OPTS += -DSTAGE=1 -optc-DSTAGE=1
-else ifeq "$3" "1"
-$1_$2_HC_OPTS += -DSTAGE=2 -optc-DSTAGE=2
-else ifeq "$3" "2"
+else
 $1_$2_HC_OPTS += -DSTAGE=2 -optc-DSTAGE=2
 endif
+endif
+
 endif
 
 $(call profEnd, build-prog($1,$2,$3,$4))

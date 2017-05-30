@@ -203,7 +203,7 @@ $$(includes_DERIVEDCONSTANTS_STAGE$1): $$(includes_H_CONFIG_STAGE$1) $$(includes
 
 $$(includes_GHCCONSTANTS_HASKELL_VALUE_STAGE$1): $$(includes_H_CONFIG_STAGE$1) $$(includes_H_PLATFORM_STAGE$1) $$(includes_H_VERSION) $$(includes_H_FILES) $$(rts_H_FILES)
 
-DERIVE_CONSTANTS_FLAGS_STAGE$1 += --gcc-program "$(WhatGccIsCalled)"
+DERIVE_CONSTANTS_FLAGS_STAGE$1 += --gcc-program "$(WhatGccIsCalledStage$1)"
 DERIVE_CONSTANTS_FLAGS_STAGE$1 += $$(addprefix --gcc-flag$$(space),$$(includes_CC_OPTS) $$(includes_CC_OPTS_STAGE$1) -fcommon)
 DERIVE_CONSTANTS_FLAGS_STAGE$1 += --nm-program "$(NM)"
 
@@ -218,7 +218,6 @@ $$(includes_GHCCONSTANTS_HASKELL_TYPE_STAGE$1): $(deriveConstants_INPLACE) | $$(
 $$(includes_GHCCONSTANTS_HASKELL_VALUE_STAGE$1): $(deriveConstants_INPLACE) | $$(dir $$@)/.
 	mkdir -p $$(dir $$@)
 	$$< --gen-haskell-value -o $$@ --tmpdir $$(dir $$@) $$(DERIVE_CONSTANTS_FLAGS_STAGE$1)
-	"$$(CP)" $$@ inplace/lib/platformConstants.stage$1
 
 $$(includes_GHCCONSTANTS_HASKELL_WRAPPERS_STAGE$1): $(deriveConstants_INPLACE) | $$(dir $$@)/.
 	mkdir -p $$(dir $$@)
@@ -234,7 +233,8 @@ endef
 
 INSTALL_LIBS += $(includes_GHCCONSTANTS_HASKELL_VALUE_STAGE2)
 
-$(eval $(call build-config-files,$(target_stage)))
+$(eval $(call build-config-files,1))
+$(eval $(call build-config-files,2))
 
 # ---------------------------------------------------------------------------
 # Install all header files

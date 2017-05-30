@@ -13,6 +13,7 @@
 utils/genapply_dist_MODULES = GenApply
 utils/genapply_dist_PROGNAME = genapply
 utils/genapply_dist_INSTALL_INPLACE = YES
+utils/genapply_dist_STAGE_OVERRIDE = 2
 
 utils/genapply_HC_OPTS += -package pretty
 

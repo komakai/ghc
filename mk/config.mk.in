@@ -491,7 +491,6 @@ SUPPORTS_PACKAGE_KEY = @SUPPORTS_PACKAGE_KEY@
 # the flag --with-gcc=<blah> instead.  The reason is that the configure script
 # needs to know which gcc you're using in order to perform its tests.
 
-WhatGccIsCalled       = @WhatGccIsCalled@
 GccVersion            = @GccVersion@
 ifeq "$(phase)" "0"
 CrossCompilePrefix    =
@@ -505,24 +504,9 @@ GccLT34         = @GccLT34@
 GccLT46         = @GccLT46@
 GccIsClang      = @GccIsClang@
 
-CC              = $(WhatGccIsCalled)
 CC_STAGE0       = @CC_STAGE0@
-CC_STAGE1       = $(CC)
-CC_STAGE2       = $(CC)
-CC_STAGE3       = $(CC)
-
-AS              = $(WhatGccIsCalled)
 AS_STAGE0       = @CC_STAGE0@
-AS_STAGE1       = $(AS)
-AS_STAGE2       = $(AS)
-AS_STAGE3       = $(AS)
-
-# We don't have an LD_STAGE0.  CC_STAGE0 is determined by asking "ghc
-# --info", and it doesn't report an LD.
 LD_STAGE0       = @LD_STAGE0@
-LD_STAGE1       = $(LD)
-LD_STAGE2       = $(LD)
-LD_STAGE3       = $(LD)
 
 # Cross-compiling options
 #
@@ -543,73 +527,10 @@ INSTALL_GHC_STAGE= $(if $(filter YES,$(Stage1Only)),1,2)
 # NOTE: The STAGE will actually have already been determined by the time
 # this file is included so define STAGE to equal that stage regardless of
 # the stage indicated in the variable name
-CONF_CC_OPTS_STAGE0 = @CONF_CC_OPTS_STAGE0@ -DSTAGE=@STAGE@
-CONF_CC_OPTS_STAGE1 = @CONF_CC_OPTS_STAGE1@ -DSTAGE=@STAGE@
-CONF_CC_OPTS_STAGE2 = @CONF_CC_OPTS_STAGE2@ -DSTAGE=@STAGE@
+CONF_CC_OPTS_STAGE0 = @CONF_CC_OPTS_STAGE0@
 CONF_GCC_LINKER_OPTS_STAGE0 = @LDFLAGS@
-CONF_GCC_LINKER_OPTS_STAGE1 = @LDFLAGS@
-CONF_GCC_LINKER_OPTS_STAGE2 = @LDFLAGS@
 CONF_LD_LINKER_OPTS_STAGE0 = @CONF_LD_LINKER_OPTS_STAGE0@
-CONF_LD_LINKER_OPTS_STAGE1 = @CONF_LD_LINKER_OPTS_STAGE1@
-CONF_LD_LINKER_OPTS_STAGE2 = @CONF_LD_LINKER_OPTS_STAGE2@
 CONF_CPP_OPTS_STAGE0 = @CONF_CPP_OPTS_STAGE0@
-CONF_CPP_OPTS_STAGE1 = @CONF_CPP_OPTS_STAGE1@
-CONF_CPP_OPTS_STAGE2 = @CONF_CPP_OPTS_STAGE2@
-
-ifeq "$(phase)" "final"
-ifeq "$(filter -DINTERACTIVE_EDITION,$(CONF_CC_OPTS_STAGE2))" "-DINTERACTIVE_EDITION"
-InteractiveEdition=YES
-endif
-endif
-
-ifeq "$(phase)" "1"
-ifeq "$(filter -DINTERACTIVE_EDITION,$(CONF_CC_OPTS_STAGE2))" "-DINTERACTIVE_EDITION"
-ConfigureInteractiveEdition=YES
-endif
-endif
-
-ifeq "$(phase)" "final"
-ifeq "$(filter -DBUILD_GHC_AS_LIB,$(CONF_CC_OPTS_STAGE2))" "-DBUILD_GHC_AS_LIB"
-GhcLib = YES
-endif
-ifeq "$(filter -DNATIVE_INPUT,$(CONF_CC_OPTS_STAGE2))" "-DNATIVE_INPUT"
-NativeInput = YES
-endif
-ifeq "$(filter -DANDROID,$(CONF_CC_OPTS_STAGE2))" "-DANDROID"
-Android = YES
-else ifeq "$(filter -DIOS_SIM,$(CONF_CC_OPTS_STAGE2))" "-DIOS_SIM"
-IosSim = YES
-else ifeq "$(filter -DIOS_DEVICE,$(CONF_CC_OPTS_STAGE2))" "-DIOS_DEVICE"
-IosDev = YES
-endif
-endif
-
-ifeq "$(phase)" "1"
-ifeq "$(filter -DBUILD_GHC_AS_LIB,$(CONF_CC_OPTS_STAGE2))" "-DBUILD_GHC_AS_LIB"
-ConfigureGhcLib = YES
-endif
-ifeq "$(filter -DNATIVE_INPUT,$(CONF_CC_OPTS_STAGE2))" "-DNATIVE_INPUT"
-ConfigureNativeInput = YES
-endif
-ifeq "$(filter -DANDROID,$(CONF_CC_OPTS_STAGE2))" "-DANDROID"
-ConfigureAndroid = YES
-else ifeq "$(filter -DIOS_SIM,$(CONF_CC_OPTS_STAGE2))" "-DIOS_SIM"
-ConfigureIosSim = YES
-else ifeq "$(filter -DIOS_DEVICE,$(CONF_CC_OPTS_STAGE2))" "-DIOS_DEVICE"
-ConfigureIosDev = YES
-endif
-endif
-
-ifeq "$(phase)" "final"
-ifeq "$(filter -DUSE_FIXUPS,$(CONF_CC_OPTS_STAGE2))" "-DUSE_FIXUPS"
-UseFixups=YES
-endif
-endif
-
-CFlagOpsStage2 = $(foreach opt,$(CONF_CC_OPTS_STAGE2),-optc$(opt))
-AFlagOpsStage2 = $(foreach opt,$(CONF_CC_OPTS_STAGE2),-opta$(opt))
-LDFlagOpsStage2 = $(foreach opt,$(CONF_GCC_LINKER_OPTS_STAGE2),-optl$(opt))
-XFlagsOpsStage2 = $(filter -D%,$(CONF_CC_OPTS_STAGE2))
 
 ifeq "$(TARGETPLATFORM)" "ia64-unknown-linux"
 CONF_CC_OPTS += -G0
@@ -623,15 +544,6 @@ SRC_HSC2HS_OPTS += --cross-safe
 endif
 SRC_HSC2HS_OPTS += $(foreach d,$(GMP_INCLUDE_DIRS),-I$(d))
 
-define set_stage_HSC2HS_OPTS
-# $1 = stage
-SRC_HSC2HS_OPTS_STAGE$1 += $$(addprefix --cflag=,$$(filter-out -O,$$(SRC_CC_OPTS) $$(CONF_CC_OPTS_STAGE$1)))
-SRC_HSC2HS_OPTS_STAGE$1 += $$(addprefix --cflag=,$$(CONF_CPP_OPTS_STAGE$1))
-SRC_HSC2HS_OPTS_STAGE$1 += $$(addprefix --lflag=,$$(CONF_GCC_LINKER_OPTS_STAGE$1))
-endef
-$(eval $(call set_stage_HSC2HS_OPTS,0))
-$(eval $(call set_stage_HSC2HS_OPTS,1))
-$(eval $(call set_stage_HSC2HS_OPTS,2))
 ifeq "$(BuildingCrossCompiler)" "YES"
 SRC_HSC2HS_OPTS_STAGE1 += --cross-compile
 SRC_HSC2HS_OPTS_STAGE2 += --cross-compile
@@ -659,32 +571,13 @@ endif
 #-----------------------------------------------------------------------------
 # Other standard (ha!) Unix utilities
 
-AR			= @ArCmd@
-AR_OPTS			= @ArArgs@
-ArSupportsAtFile = @ArSupportsAtFile@
-
 AR_STAGE0 = @AR_STAGE0@
-AR_STAGE1 = $(AR)
-AR_STAGE2 = $(AR)
-AR_STAGE3 = $(AR)
 AR_OPTS_STAGE0 = @AR_OPTS_STAGE0@
-AR_OPTS_STAGE1 = $(AR_OPTS)
-AR_OPTS_STAGE2 = $(AR_OPTS)
-AR_OPTS_STAGE3 = $(AR_OPTS)
 EXTRA_AR_ARGS_STAGE0 = $(EXTRA_AR_ARGS)
-EXTRA_AR_ARGS_STAGE1 = $(EXTRA_AR_ARGS)
-EXTRA_AR_ARGS_STAGE2 = $(EXTRA_AR_ARGS)
-EXTRA_AR_ARGS_STAGE3 = $(EXTRA_AR_ARGS)
 ArSupportsAtFile_STAGE0 = @ArSupportsAtFile_STAGE0@
-ArSupportsAtFile_STAGE1 = $(ArSupportsAtFile)
-ArSupportsAtFile_STAGE2 = $(ArSupportsAtFile)
-ArSupportsAtFile_STAGE3 = $(ArSupportsAtFile)
 
 CONTEXT_DIFF		= @ContextDiffCmd@
 CP			= cp
-# It's not easy to separate the CPP program from its flags, as
-# AC_PROG_CPP defines CPP as "/usr/bin/gcc -E"
-CPP			= @CPP@ @CPPFLAGS@
 #
 # RAWCPP_FLAGS are the flags to give to cpp (viz, gcc -E) to persuade it to
 # behave plausibly on Haskell sources.

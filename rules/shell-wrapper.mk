@@ -42,7 +42,7 @@ $$(INPLACE_WRAPPER): $$($1_$2_INPLACE)
 	echo 'datadir="$$(TOP)/$$(INPLACE_LIB)"'                             >> $$@
 	echo 'bindir="$$(TOP)/$$(INPLACE_BIN)"'                              >> $$@
 	echo 'topdir="$$(TOP)/$$(INPLACE_TOPDIR)"'                           >> $$@
-	echo 'pgmgcc="$$(WhatGccIsCalled)"'                                  >> $$@
+	echo 'pgmgcc="$$(WhatGccIsCalledStage$(target_stage))"'              >> $$@
 	$$($1_$2_SHELL_WRAPPER_EXTRA)
 	$$($1_$2_INPLACE_SHELL_WRAPPER_EXTRA)
 ifeq "$$(DYNAMIC_GHC_PROGRAMS)" "YES"
@@ -77,7 +77,7 @@ $$(INPLACE_WRAPPER_ALLLINK): $$($1_$2_INPLACE_ALLLINK)
 	echo 'datadir="$$$$top/$$(INPLACE_LIB)"'                             >> $$@
 	echo 'bindir="$$$$top/$$(INPLACE_BIN)"'                              >> $$@
 	echo 'topdir="$$$$top/$$(INPLACE_TOPDIR)"'                           >> $$@
-	echo 'pgmgcc="$$(WhatGccIsCalled)"'                                  >> $$@
+	echo 'pgmgcc="$$(WhatGccIsCalled$(target_stage))"'                   >> $$@
 	$$($1_$2_SHELL_WRAPPER_EXTRA)
 	$$($1_$2_INPLACE_SHELL_WRAPPER_EXTRA)
 ifeq "$$(DYNAMIC_GHC_PROGRAMS)" "YES"

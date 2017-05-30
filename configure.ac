@@ -682,22 +682,17 @@ FP_PROG_LD_FILELIST
 
 FPTOOLS_SET_C_LD_FLAGS([target],[CFLAGS],[LDFLAGS],[IGNORE_LINKER_LD_FLAGS],[CPPFLAGS])
 FPTOOLS_SET_C_LD_FLAGS([build],[CONF_CC_OPTS_STAGE0],[CONF_GCC_LINKER_OPTS_STAGE0],[CONF_LD_LINKER_OPTS_STAGE0],[CONF_CPP_OPTS_STAGE0])
-FPTOOLS_SET_C_LD_FLAGS([target],[CONF_CC_OPTS_STAGE1],[CONF_GCC_LINKER_OPTS_STAGE1],[CONF_LD_LINKER_OPTS_STAGE1],[CONF_CPP_OPTS_STAGE1])
-FPTOOLS_SET_C_LD_FLAGS([target],[CONF_CC_OPTS_STAGE2],[CONF_GCC_LINKER_OPTS_STAGE2],[CONF_LD_LINKER_OPTS_STAGE2],[CONF_CPP_OPTS_STAGE2])
+FPTOOLS_SET_C_LD_FLAGS([target],[CONF_CC_OPTS],[CONF_GCC_LINKER_OPTS],[CONF_LD_LINKER_OPTS],[CONF_CPP_OPTS])
 # Stage 3 won't be supported by cross-compilation
 
 CONF_CC_OPTS_STAGE0="$CONF_CC_OPTS_STAGE0 $CFLAGS"
-CONF_CC_OPTS_STAGE1="$CONF_CC_OPTS_STAGE1 $CFLAGS"
-CONF_CC_OPTS_STAGE2="$CONF_CC_OPTS_STAGE2 $CFLAGS"
+CONF_CC_OPTS="$CONF_CC_OPTS $CFLAGS"
 CONF_GCC_LINKER_OPTS_STAGE0="$CONF_GCC_LINKER_OPTS_STAGE0 $LDFLAGS"
-CONF_GCC_LINKER_OPTS_STAGE1="$CONF_GCC_LINKER_OPTS_STAGE1 $LDFLAGS"
-CONF_GCC_LINKER_OPTS_STAGE2="$CONF_GCC_LINKER_OPTS_STAGE2 $LDFLAGS"
+CONF_GCC_LINKER_OPTS="$CONF_GCC_LINKER_OPTS $LDFLAGS"
 CONF_LD_LINKER_OPTS_STAGE0="$CONF_LD_LINKER_OPTS_STAGE0 $LDFLAGS"
-CONF_LD_LINKER_OPTS_STAGE1="$CONF_LD_LINKER_OPTS_STAGE1 $LDFLAGS"
-CONF_LD_LINKER_OPTS_STAGE2="$CONF_LD_LINKER_OPTS_STAGE2 $LDFLAGS"
+CONF_LD_LINKER_OPTS="$CONF_LD_LINKER_OPTS $LDFLAGS"
 CONF_CPP_OPTS_STAGE0="$CONF_CPP_OPTS_STAGE0 $CPPFLAGS"
-CONF_CPP_OPTS_STAGE1="$CONF_CPP_OPTS_STAGE1 $CPPFLAGS"
-CONF_CPP_OPTS_STAGE2="$CONF_CPP_OPTS_STAGE2 $CPPFLAGS"
+CONF_CPP_OPTS="$CONF_CPP_OPTS $CPPFLAGS"
 
 FP_GCC_EXTRA_FLAGS
 
@@ -705,17 +700,13 @@ dnl ** figure out how to invoke cpp directly (gcc -E is no good)
 AC_PROG_CPP
 
 AC_SUBST(CONF_CC_OPTS_STAGE0)
-AC_SUBST(CONF_CC_OPTS_STAGE1)
-AC_SUBST(CONF_CC_OPTS_STAGE2)
+AC_SUBST(CONF_CC_OPTS)
 AC_SUBST(CONF_GCC_LINKER_OPTS_STAGE0)
-AC_SUBST(CONF_GCC_LINKER_OPTS_STAGE1)
-AC_SUBST(CONF_GCC_LINKER_OPTS_STAGE2)
+AC_SUBST(CONF_GCC_LINKER_OPTS)
 AC_SUBST(CONF_LD_LINKER_OPTS_STAGE0)
-AC_SUBST(CONF_LD_LINKER_OPTS_STAGE1)
-AC_SUBST(CONF_LD_LINKER_OPTS_STAGE2)
+AC_SUBST(CONF_LD_LINKER_OPTS)
 AC_SUBST(CONF_CPP_OPTS_STAGE0)
-AC_SUBST(CONF_CPP_OPTS_STAGE1)
-AC_SUBST(CONF_CPP_OPTS_STAGE2)
+AC_SUBST(CONF_CPP_OPTS)
 
 dnl ** Set up the variables for the platform in the settings file.
 dnl May need to use gcc to find platform details.
@@ -1084,7 +1075,7 @@ if grep '	' compiler/ghc.cabal.in 2>&1 >/dev/null; then
    AC_MSG_ERROR([compiler/ghc.cabal.in contains tab characters; please remove them])
 fi
 
-AC_CONFIG_FILES([mk/config.mk mk/install.mk mk/project.mk compiler/ghc.cabal ghc/ghc-bin.cxbxl ghc/ghc-lib.cxbxl utils/runghc/runghc.cabal settings docs/users_guide/ug-book.xml docs/users_guide/ug-ent.xml docs/index.html libraries/prologue.txt distrib/configure.ac])
+AC_CONFIG_FILES([mk/config.mk mk/stage-config.mk mk/install.mk mk/project.mk compiler/ghc.cabal ghc/ghc-bin.cxbxl ghc/ghc-lib.cxbxl utils/runghc/runghc.cabal settings docs/users_guide/ug-book.xml docs/users_guide/ug-ent.xml docs/index.html libraries/prologue.txt distrib/configure.ac])
 AC_OUTPUT
 
 # We got caught by
@@ -1116,6 +1107,7 @@ Copying config.h, config.mk, project.mk files to stage$STAGE sub-directory
   mkdir -p mk/stage$STAGE
   mv mk/config.h mk/stage$STAGE
   mv mk/config.mk mk/stage$STAGE
+  mv mk/stage-config.mk mk/stage$STAGE
   sed -i -e "s/stage\/project.mk/stage$STAGE\/project.mk/g" mk/stage$STAGE/config.mk
   mv mk/project.mk mk/stage$STAGE
   mv settings settings.stage$STAGE
@@ -1128,15 +1120,21 @@ Copying config.h, config.mk, project.mk files to stage1/stage2 sub-directories
   mkdir -p mk/stage1
   cp mk/config.h mk/stage1
   cp mk/config.mk mk/stage1
+  cp mk/stage-config.mk mk/stage1
   sed -i -e "s/stage\/project.mk/stage1\/project.mk/g" mk/stage1/config.mk
-  sed -i -e "s/DSTAGE=/DSTAGE=1/g" mk/stage1/config.mk
+  sed -i -e "STAGE/STAGE1/g" mk/stage1/stage-config.mk
+  sed -i -e "Stage/Stage1/g" mk/stage1/stage-config.mk
+  sed -i -e "s/DSTAGE1=/DSTAGE=1/g" mk/stage1/stage-config.mk
   cp mk/project.mk mk/stage1
   cp settings settings.stage1
   mkdir -p mk/stage2
   mv mk/config.h mk/stage2
   mv mk/config.mk mk/stage2
+  mv mk/stage-config.mk mk/stage2
   sed -i -e "s/stage\/project.mk/stage2\/project.mk/g" mk/stage2/config.mk
-  sed -i -e "s/DSTAGE=/DSTAGE=2/g" mk/stage2/config.mk
+  sed -i -e "STAGE/STAGE2/g" mk/stage2/stage-config.mk
+  sed -i -e "Stage/Stage2/g" mk/stage2/stage-config.mk
+  sed -i -e "s/DSTAGE2=/DSTAGE=2/g" mk/stage2/stage-config.mk
   mv mk/project.mk mk/stage2
   mv settings settings.stage2
 fi

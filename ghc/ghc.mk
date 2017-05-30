@@ -12,7 +12,7 @@
 
 ghc_USES_CABAL = YES
 ghc_CABAL_TARGET_FILE = ghc
-ifeq "$(ConfigureGhcLib)$(GhcLib)" "YES"
+ifeq "$(GhcLib)" "YES"
 ghc_PACKAGE = ghc-lib
 ghc_CXBXL_FILE = ghc-lib.cxbxl
 else
@@ -25,7 +25,7 @@ ghc_stage2_CONFIGURE_OPTS += --flags=stage2
 ghc_stage3_CONFIGURE_OPTS += --flags=stage3
 
 ifeq "$(GhcWithInterpreter)" "YES"
-ifeq "$(ConfigureInteractiveEdition)$(InteractiveEdition)" "YES"
+ifeq "$(InteractiveEdition)" "YES"
 ghc_stage2_CONFIGURE_OPTS += --flags=interactiveghci
 else
 ghc_stage2_CONFIGURE_OPTS += --flags=ghci
@@ -37,10 +37,8 @@ ghc_stage3_CONFIGURE_OPTS += --flags=ghci
 endif
 endif
 
-ifeq "$(ConfigureAndroid)$(Android)$(ConfigureNativeInput)$(NativeInput)" "YESYES"
-ghc_stage2_CONFIGURE_OPTS += --flags=androidnativeinput
-endif
 ifeq "$(Android)$(NativeInput)" "YESYES"
+ghc_stage2_CONFIGURE_OPTS += --flags=androidnativeinput
 ghc_stage3_CONFIGURE_OPTS += --flags=androidnativeinput
 endif
 
@@ -145,12 +143,12 @@ $(eval $(call build-prog,ghc,stage1,0))
 ifeq "$(GhcLib)" "YES"
 $(eval $(call build-package,ghc,stage2,1))
 else
-ifeq "$(ConfigureInteractiveEdition)$(InteractiveEdition)" "YES"
+ifeq "$(InteractiveEdition)" "YES"
 $(eval $(call build-prog,ghc,stage2,1,YES))
 else
 $(eval $(call build-prog,ghc,stage2,1))
 endif
-ifeq "$(ConfigureAndroid)$(Android)" "YES"
+ifeq "$(Android)" "YES"
 ghc_stage2_HC_OPTS += -fPIE
 endif
 endif
@@ -190,10 +188,7 @@ $(INPLACE_LIB)/platformConstants.stage2: $(includes_GHCCONSTANTS_HASKELL_VALUE_S
 
 GHC_DEPENDENCIES_STAGE1 += $$(unlit_INPLACE)
 GHC_DEPENDENCIES_STAGE1 += $(INPLACE_LIB)/settings.stage1 $(INPLACE_LIB)/settings.stage2
-GHC_DEPENDENCIES_STAGE1 += $(INPLACE_LIB)/platformConstants.stage1
-GHC_DEPENDENCIES_STAGE2 += $$(unlit_INPLACE)
-GHC_DEPENDENCIES_STAGE2 += $(INPLACE_LIB)/settings.stage2
-GHC_DEPENDENCIES_STAGE2 += $(INPLACE_LIB)/platformConstants.stage2
+GHC_DEPENDENCIES_STAGE1 += $(INPLACE_LIB)/platformConstants.stage1 $(INPLACE_LIB)/platformConstants.stage2
 
 $(GHC_STAGE1) : | $(GHC_DEPENDENCIES_STAGE1)
 $(GHC_STAGE2) : | $(GHC_DEPENDENCIES_STAGE2)

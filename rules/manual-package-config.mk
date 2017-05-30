@@ -16,7 +16,7 @@ $(call trace, manual-package-config($1))
 $(call profStart, manual-package-config($1))
 
 $1/dist/package.conf.inplace : $1/package.conf.in $$$$(ghc-pkg_INPLACE) | $$$$(dir $$$$@)/.
-	$$(CPP) $$(RAWCPP_FLAGS) -P \
+	$$(CPP_STAGE2) $$(RAWCPP_FLAGS) -P \
 		-DTOP='"$$(TOP)"' \
 		$$($1_PACKAGE_CPP_OPTS) \
 		-DSTAGE=$$(target_stage) \
@@ -30,7 +30,7 @@ $1/dist/package.conf.inplace : $1/package.conf.in $$$$(ghc-pkg_INPLACE) | $$$$(d
 # "make install", so we declare it as phony
 .PHONY: $1/dist/package.conf.install
 $1/dist/package.conf.install: | $$$$(dir $$$$@)/.
-	$$(CPP) $$(RAWCPP_FLAGS) -P \
+	$$(CPP_STAGE2) $$(RAWCPP_FLAGS) -P \
 		-DINSTALLING \
 		-DLIB_DIR='"$$(if $$(filter YES,$$(RelocatableBuild)),$$$$topdir,$$(ghclibdir))"' \
 		-DINCLUDE_DIR='"$$(if $$(filter YES,$$(RelocatableBuild)),$$$$topdir,$$(ghclibdir))/include"' \

@@ -55,7 +55,7 @@ utils/ghc-pkg/dist/package-data.mk: \
 
 ifneq "$(Stage1Only)" "YES"
 
-ifeq "$(ConfigureInteractiveEdition)$(InteractiveEdition)" "YES"
+ifeq "$(InteractiveEdition)" "YES"
 utils/ghc-pkg_dist-install_CONFIGURE_OPTS += --flags=interactive
 endif
 
@@ -71,13 +71,13 @@ utils/ghc-pkg_dist-install_INSTALL_ALLLINK_INPLACE = YES
 
 utils/ghc-pkg_dist-install_MORE_HC_OPTS = $(GhcStage2HcOpts)
 
-ifeq "$(ConfigureInteractiveEdition)$(InteractiveEdition)" "YES"
+ifeq "$(InteractiveEdition)" "YES"
 $(eval $(call build-prog,utils/ghc-pkg,dist-install,1,YES))
 else
 $(eval $(call build-prog,utils/ghc-pkg,dist-install,1))
 endif
 
-ifeq "$(ConfigureAndroid)$(Android)" "YES"
+ifeq "$(Android)" "YES"
 utils/ghc-pkg_dist-install_HC_OPTS += -fPIE
 endif
 

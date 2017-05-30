@@ -269,9 +269,10 @@ compiler_CPP_OPTS_STAGE2 += $(addprefix -I,$(GHC_INCLUDE_DIRS_STAGE2))
 compiler_CPP_OPTS_STAGE2 += ${GhcCppOpts}
 
 define preprocessCompilerFiles
-# $1 = stage
-compiler/stage$1/build/primops.txt: compiler/prelude/primops.txt.pp compiler/stage$1/$$(PLATFORM_H)
-	$$(CPP) $$(RAWCPP_FLAGS) -P $$(compiler_CPP_OPTS_STAGE$1) -DSTAGE=$1 -Icompiler/stage$1 -x c $$< | grep -v '^#pragma GCC' > $$@
+# $1 = stage - being built
+# $2 = stage - being used
+compiler/stage$1/build/primops.txt: compiler/prelude/primops.txt.pp compiler/stage$2/$$(PLATFORM_H)
+	$$(CPP_STAGE$2) $$(RAWCPP_FLAGS) -P $$(compiler_CPP_OPTS_STAGE$2) -DSTAGE=$2 -Icompiler/stage$2 -x c $$< | grep -v '^#pragma GCC' > $$@
 
 compiler/stage$1/build/primop-data-decl.hs-incl: compiler/stage$1/build/primops.txt $$$$(genprimopcode_INPLACE)
 	"$$(genprimopcode_INPLACE)" --data-decl          < $$< > $$@
@@ -311,9 +312,8 @@ compiler/stage$1/build/primop-usage.hs-incl: compiler/stage$1/build/primops.txt 
 
 endef
 
-$(eval $(call preprocessCompilerFiles,1))
-$(eval $(call preprocessCompilerFiles,2))
-$(eval $(call preprocessCompilerFiles,3))
+$(eval $(call preprocessCompilerFiles,1,2))
+$(eval $(call preprocessCompilerFiles,2,2))
 
 # -----------------------------------------------------------------------------
 # Configuration
@@ -334,7 +334,7 @@ compiler_stage2_CONFIGURE_OPTS += --flags=ncg
 endif
 
 ifeq "$(GhcWithInterpreter)" "YES"
-ifeq "$(ConfigureInteractiveEdition)$(InteractiveEdition)" "YES"
+ifeq "$(InteractiveEdition)" "YES"
 compiler_stage2_CONFIGURE_OPTS += --flags=interactiveghci
 else
 compiler_stage2_CONFIGURE_OPTS += --flags=ghci
@@ -710,13 +710,13 @@ COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_GHCCONSTANTS_HASKELL_WRAPPERS_STAGE1
 COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_GHCCONSTANTS_HASKELL_EXPORTS_STAGE1)
 COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_DERIVEDCONSTANTS_STAGE1)
 
-COMPILER_INCLUDES_DEPS_STAGE2 += $(includes_H_CONFIG_STAGE2)
-COMPILER_INCLUDES_DEPS_STAGE2 += $(includes_H_PLATFORM_STAGE2)
-COMPILER_INCLUDES_DEPS_STAGE2 += $(includes_GHCCONSTANTS_STAGE2)
-COMPILER_INCLUDES_DEPS_STAGE2 += $(includes_GHCCONSTANTS_HASKELL_TYPE_STAGE2)
-COMPILER_INCLUDES_DEPS_STAGE2 += $(includes_GHCCONSTANTS_HASKELL_WRAPPERS_STAGE2)
-COMPILER_INCLUDES_DEPS_STAGE2 += $(includes_GHCCONSTANTS_HASKELL_EXPORTS_STAGE2)
-COMPILER_INCLUDES_DEPS_STAGE2 += $(includes_DERIVEDCONSTANTS_STAGE2)
+COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_H_CONFIG_STAGE2)
+COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_H_PLATFORM_STAGE2)
+COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_GHCCONSTANTS_STAGE2)
+COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_GHCCONSTANTS_HASKELL_TYPE_STAGE2)
+COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_GHCCONSTANTS_HASKELL_WRAPPERS_STAGE2)
+COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_GHCCONSTANTS_HASKELL_EXPORTS_STAGE2)
+COMPILER_INCLUDES_DEPS_STAGE1 += $(includes_DERIVEDCONSTANTS_STAGE2)
 
 $(compiler_stage1_depfile_haskell) : $(COMPILER_INCLUDES_DEPS_STAGE1) $(PRIMOP_BITS_STAGE1)
 $(compiler_stage2_depfile_haskell) : $(COMPILER_INCLUDES_DEPS_STAGE2) $(PRIMOP_BITS_STAGE2)

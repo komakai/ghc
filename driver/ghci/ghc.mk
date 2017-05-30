@@ -43,7 +43,7 @@ driver/ghci_dist_PROG_VER = ghci-$(ProjectVersion)$(exeext1)
 INSTALL_BINS += driver/ghci/dist/build/tmp/$(driver/ghci_dist_PROG_VER)
 
 driver/ghci/ghci.res : driver/ghci/ghci.rc driver/ghci/ghci.ico
-	"$(WINDRES)" --preprocessor="$(CPP) -xc -DRC_INVOKED" -o driver/ghci/ghci.res -i driver/ghci/ghci.rc -O coff
+	"$(WINDRES)" --preprocessor="$(CPP_STAGE2) -xc -DRC_INVOKED" -o driver/ghci/ghci.res -i driver/ghci/ghci.rc -O coff
 
 driver/ghci/dist/build/tmp/$(driver/ghci_dist_PROG_VER) : driver/ghci/dist/build/tmp/$(driver/ghci_dist_PROG)
 	"$(CP)" $< $@

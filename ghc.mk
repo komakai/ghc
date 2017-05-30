@@ -161,6 +161,28 @@ include mk/stage1/config.mk
 else
 include mk/stage2/config.mk
 endif
+include mk/stage1/stage-config.mk
+include mk/stage2/stage-config.mk
+
+ifeq "$(filter -DINTERACTIVE_EDITION,$(CONF_CC_OPTS_STAGE2))" "-DINTERACTIVE_EDITION"
+InteractiveEdition=YES
+endif
+ifeq "$(filter -DBUILD_GHC_AS_LIB,$(CONF_CC_OPTS_STAGE2))" "-DBUILD_GHC_AS_LIB"
+GhcLib = YES
+endif
+ifeq "$(filter -DNATIVE_INPUT,$(CONF_CC_OPTS_STAGE2))" "-DNATIVE_INPUT"
+NativeInput = YES
+endif
+ifeq "$(filter -DANDROID,$(CONF_CC_OPTS_STAGE2))" "-DANDROID"
+Android = YES
+else ifeq "$(filter -DIOS_SIM,$(CONF_CC_OPTS_STAGE2))" "-DIOS_SIM"
+IosSim = YES
+else ifeq "$(filter -DIOS_DEVICE,$(CONF_CC_OPTS_STAGE2))" "-DIOS_DEVICE"
+IosDev = YES
+endif
+ifeq "$(filter -DUSE_FIXUPS,$(CONF_CC_OPTS_STAGE2))" "-DUSE_FIXUPS"
+UseFixups=YES
+endif
 
 ifeq "$(ProjectVersion)" ""
 $(error Please run ./configure first)
@@ -445,12 +467,12 @@ endif
 
 ifeq "$(Windows_Target)" "NO"
 ifneq "$(TargetOS_CPP)" "ios"
-ifneq "$(InteractiveEdition)$(ConfigureInteractiveEdition)" "YES"
+ifneq "$(InteractiveEdition)" "YES"
 PACKAGES_STAGE1 += terminfo
 endif
 endif
 endif
-ifneq "$(InteractiveEdition)$(ConfigureInteractiveEdition)" "YES"
+ifneq "$(InteractiveEdition)" "YES"
 PACKAGES_STAGE1 += haskeline
 endif
 
