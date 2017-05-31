@@ -119,10 +119,10 @@ Clone the git repository together with submodules:
 `git clone --recursive https://github.com/komakai/ghc.git ghc-komakai`
 
 Switch to the ghc-7.10-interactive-edition branch:  
-`cd ghc-komakai`
-`git fetch origin`
-`git checkout -b ghc-7.10-interactive-edition origin/ghc-7.10-interactive-edition`
-`git submodule update`
+`cd ghc-komakai`  
+`git fetch origin`  
+`git checkout -b ghc-7.10-interactive-edition origin/ghc-7.10-interactive-edition`  
+`git submodule update`  
 
 ### Setting up Android Build Tools
 
