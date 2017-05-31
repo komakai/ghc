@@ -1,16 +1,18 @@
 #!/bin/sh
-rm -r android-install
+rm -rf android-install
 mkdir -p android-install/ghc/inplace/lib/package.conf.d
 mkdir -p android-install/ghc/inplace/lib/bin
 mkdir -p android-install/ghc/inplace/bin
 mkdir -p android-install/ghc/ghc/linkall
 mkdir -p android-install/ghc/libraries
+mkdir -p android-install/ghc/test
 
 cp inplace/lib/package.conf.d/* android-install/ghc/inplace/lib/package.conf.d
 cp inplace/lib/bin/*-alllink android-install/ghc/inplace/lib/bin
 cp inplace/lib/platformConstants.stage2 android-install/ghc/inplace/lib
 cp inplace/bin/*-alllink android-install/ghc/inplace/bin
 cp ghc/linkall/*.so android-install/ghc/ghc/linkall
+cp test/* android-install/ghc/test
 cp android-install.sh android-install
 
 sed -i -e 1,1d android-install/ghc/inplace/bin/ghc-pkg-alllink

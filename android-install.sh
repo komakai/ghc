@@ -19,4 +19,4 @@ adb shell chmod 757 $installdir/inplace/lib/bin/ghc-pkg-alllink
 adb shell chmod 757 $installdir/inplace/lib/bin/ghc-stage2-alllink
 adb shell chmod 757 $installdir/ghc/linkall/`ls ghc/ghc/linkall`
 
-adb shell $installdir/inplace/bin/ghc-pkg-alllink recache --force -f $installdir/inplace/lib/package.conf.d
+adb shell "cd $installdir && inplace/bin/ghc-pkg-alllink recache --force -f $installdir/inplace/lib/package.conf.d"
