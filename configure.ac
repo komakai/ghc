@@ -1122,8 +1122,8 @@ Copying config.h, config.mk, project.mk files to stage1/stage2 sub-directories
   cp mk/config.mk mk/stage1
   cp mk/stage-config.mk mk/stage1
   sed -i -e "s/stage\/project.mk/stage1\/project.mk/g" mk/stage1/config.mk
-  sed -i -e "STAGE/STAGE1/g" mk/stage1/stage-config.mk
-  sed -i -e "Stage/Stage1/g" mk/stage1/stage-config.mk
+  sed -i -e "s/STAGE/STAGE1/g" mk/stage1/stage-config.mk
+  sed -i -e "s/Stage/Stage1/g" mk/stage1/stage-config.mk
   sed -i -e "s/DSTAGE1=/DSTAGE=1/g" mk/stage1/stage-config.mk
   cp mk/project.mk mk/stage1
   cp settings settings.stage1
@@ -1132,8 +1132,8 @@ Copying config.h, config.mk, project.mk files to stage1/stage2 sub-directories
   mv mk/config.mk mk/stage2
   mv mk/stage-config.mk mk/stage2
   sed -i -e "s/stage\/project.mk/stage2\/project.mk/g" mk/stage2/config.mk
-  sed -i -e "STAGE/STAGE2/g" mk/stage2/stage-config.mk
-  sed -i -e "Stage/Stage2/g" mk/stage2/stage-config.mk
+  sed -i -e "s/STAGE/STAGE2/g" mk/stage2/stage-config.mk
+  sed -i -e "s/Stage/Stage2/g" mk/stage2/stage-config.mk
   sed -i -e "s/DSTAGE2=/DSTAGE=2/g" mk/stage2/stage-config.mk
   mv mk/project.mk mk/stage2
   mv settings settings.stage2
