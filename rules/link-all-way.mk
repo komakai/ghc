@@ -5,10 +5,16 @@ $2_LINKALL_LIB = $1/lib$$(linkall_LIBNAME)$$($2_libsuf)
 
 ifeq "$2" "dyn"
 
+ifeq "$$(darwin_HOST_OS)" "1"
+$2_DYNLINK_OPTS = -dynamiclib -undefined dynamic_lookup -single_module -Wl,-read_only_relocs,suppress
+else
+$2_DYNLINK_OPTS = -shared -Wl,-Bsymbolic -Wl,-h,$(notdir $$@)
+endif
+
 $$($2_LINKALL_LIB) : $$($2_ALL_OBJS)
 	mkdir -p $$(dir $$@);
 	"$$(ALL_LINKER)" \
-         -shared -Wl,-Bsymbolic -Wl,-h,$(notdir $$@) \
+         $$($2_DYNLINK_OPTS) \
          $$($2_ALL_OBJS) \
          $$(ALL_LINKER_OPTS) $$(ALL_EXTRA_LINKER_OPTS) \
          -o $$@
