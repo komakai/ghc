@@ -26,7 +26,6 @@ AC_DEFUN([GHC_SELECT_FILE_EXTENSIONS],
         $3='.dylib'
         ;;
     arm-apple-darwin10|i386-apple-darwin11|aarch64-apple-darwin14)
-        $2='.a'
         $3='.dylib'
         ;;
     esac
@@ -2268,7 +2267,8 @@ AC_DEFUN([FIND_GCC],[
 #
 AC_DEFUN([FIND_READELF],[
     if test "$HostOS" != "mingw32" &&
-       test "$HostOS" != "darwin" ; then
+       test "$HostOS" != "darwin" &&
+       test "$HostOS" != "ios" ; then
         FP_ARG_WITH_PATH_GNU_PROG([READELF], [readelf], [readelf])
         if test -z "$READELF"; then
             AC_MSG_ERROR([cannot identify readelf tool])

@@ -1639,7 +1639,11 @@ linkDynLib dflags0 o_files dep_packages
                                               (map packageKey pkgs)
     let framework_opts = getFrameworkOpts dflags platform
 
-    case os of
+    let dynamic_library_target = case os of
+                      OSiOS -> OSDarwin
+                      x -> x
+
+    case dynamic_library_target of
         OSMinGW32 -> do
             -------------------------------------------------------------
             -- Making a DLL

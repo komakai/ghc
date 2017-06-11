@@ -1,0 +1,22 @@
+#!/bin/sh
+args=( "$@" )
+usegcc=yes
+for (( i=0 ; i < ${#args[@]} ; i++ ))
+do
+  if [[ ${args[$i]} == -Wl,* ]]
+  then
+    break
+  fi
+  if [[ ${args[$i]} == -r ]] || [[ ${args[$i]} == -v ]] || [[ ${args[$i]} == --version ]] || [[ ${args[$i]} == --help ]]
+  then
+    usegcc=no
+    break
+  fi
+done
+if [ "$usegcc" == "yes" ];
+then
+  exec "/usr/bin/gcc" ${1+"${args[@]}"}
+else
+  exec "/usr/bin/ld" ${1+"${args[@]}"}
+fi
+

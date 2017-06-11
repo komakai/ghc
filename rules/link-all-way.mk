@@ -5,7 +5,7 @@ $2_LINKALL_LIB = $1/lib$$(linkall_LIBNAME)$$($2_libsuf)
 
 ifeq "$2" "dyn"
 
-ifeq "$$(darwin_HOST_OS)" "1"
+ifeq "$$(darwin_HOST_OS)$$(ios_HOST_OS)" "1"
 $2_DYNLINK_OPTS = -dynamiclib -undefined dynamic_lookup -single_module -Wl,-read_only_relocs,suppress
 else
 $2_DYNLINK_OPTS = -shared -Wl,-Bsymbolic -Wl,-h,$(notdir $$@)
