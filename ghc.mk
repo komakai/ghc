@@ -168,10 +168,14 @@ ifeq "$(filter -DINTERACTIVE_EDITION,$(CONF_CC_OPTS_STAGE2))" "-DINTERACTIVE_EDI
 InteractiveEdition=YES
 endif
 ifeq "$(filter -DBUILD_GHC_AS_LIB,$(CONF_CC_OPTS_STAGE2))" "-DBUILD_GHC_AS_LIB"
-GhcLib = YES
+ifeq "$(target_stage)" "2"
+BuildGhcAsLib = YES
+endif
 endif
 ifeq "$(filter -DNATIVE_INPUT,$(CONF_CC_OPTS_STAGE2))" "-DNATIVE_INPUT"
+ifeq "$(target_stage)" "2"
 NativeInput = YES
+endif
 endif
 ifeq "$(filter -DANDROID,$(CONF_CC_OPTS_STAGE2))" "-DANDROID"
 Android = YES
@@ -181,7 +185,9 @@ else ifeq "$(filter -DIOS_DEVICE,$(CONF_CC_OPTS_STAGE2))" "-DIOS_DEVICE"
 IosDev = YES
 endif
 ifeq "$(filter -DUSE_FIXUPS,$(CONF_CC_OPTS_STAGE2))" "-DUSE_FIXUPS"
+ifeq "$(target_stage)" "2"
 UseFixups=YES
+endif
 endif
 
 ifeq "$(ProjectVersion)" ""

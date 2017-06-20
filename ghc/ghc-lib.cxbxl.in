@@ -1,5 +1,5 @@
--- WARNING: ghc-bin.cabal is automatically generated from ghc-bin.cabal.in by
--- ./configure.  Make sure you are editing ghc-bin.cabal.in, not ghc-bin.cabal.
+-- WARNING: ghc.cabal is automatically generated from ghc-lib.cxbxl.in by
+-- ./configure.  Make sure you are editing ghc-lib.cabal.in, not ghc.cabal.
 
 Name: ghc-lib
 Version: @ProjectVersion@
@@ -36,7 +36,7 @@ Flag androidnativeinput
 library
     Default-Language: Haskell2010
 
-    Main-Is: Main.hs
+    Exposed-Modules: Main
     Build-Depends: base       >= 3   && < 5,
                    array      >= 0.1 && < 0.6,
                    bytestring >= 0.9 && < 0.11,

@@ -12,7 +12,7 @@
 
 ghc_USES_CABAL = YES
 ghc_CABAL_TARGET_FILE = ghc
-ifeq "$(GhcLib)" "YES"
+ifeq "$(BuildGhcAsLib)" "YES"
 ghc_PACKAGE = ghc-lib
 ghc_CXBXL_FILE = ghc-lib.cxbxl
 else
@@ -92,12 +92,6 @@ ifeq "$(GhcProfiled)" "YES"
 ghc_stage2_PROGRAM_WAY = p
 endif
 
-ifeq "$(InteractiveEdition)" "YES"
-linkall_LIBNAME = haskell
-linkall_DIR = ghc/linkall
-$(eval $(call linkall,$(linkall_DIR)))
-endif
-
 ghc_stage1_PROGNAME = ghc-stage1
 ghc_stage2_PROGNAME = ghc-stage2
 ghc_stage2_PROGNAME_ALLLINK = ghc-stage2-alllink
@@ -140,7 +134,7 @@ ifneq "$(stage)" "3"
 ghc_stage3_NOT_NEEDED = YES
 endif
 $(eval $(call build-prog,ghc,stage1,0))
-ifeq "$(GhcLib)" "YES"
+ifeq "$(BuildGhcAsLib)" "YES"
 $(eval $(call build-package,ghc,stage2,1))
 else
 ifeq "$(InteractiveEdition)" "YES"
@@ -153,6 +147,12 @@ ghc_stage2_HC_OPTS += -fPIE
 endif
 endif
 $(eval $(call build-prog,ghc,stage3,2))
+
+ifeq "$(InteractiveEdition)" "YES"
+linkall_LIBNAME = haskell
+linkall_DIR = ghc/linkall
+$(eval $(call linkall,$(linkall_DIR)))
+endif
 
 ifneq "$(BINDIST)" "YES"
 
