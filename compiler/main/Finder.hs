@@ -49,6 +49,11 @@ import Control.Monad
 import Data.Time
 import Data.List        ( foldl' )
 
+#if defined(INTERACTIVE_EDITION) && defined(USE_FIXUPS)
+import Foreign.C
+import Foreign.Ptr
+import Foreign.ForeignPtr
+#endif
 
 type FileExt = String   -- Filename extension
 type BaseName = String  -- Basename of file
@@ -264,12 +269,16 @@ findHomeModule hsc_env mod_name =
      hisuf = hiSuf dflags
      mod = mkModule (thisPackage dflags) mod_name
 
+#if defined(INTERACTIVE_EDITION)
+     source_exts = []
+#else
      source_exts =
       [ ("hs",   mkHomeModLocationSearched dflags mod_name "hs")
       , ("lhs",  mkHomeModLocationSearched dflags mod_name "lhs")
       , ("hsig",  mkHomeModLocationSearched dflags mod_name "hsig")
       , ("lhsig",  mkHomeModLocationSearched dflags mod_name "lhsig")
       ]
+#endif
 
      hi_exts = [ (hisuf,                mkHiOnlyModLocation dflags hisuf)
                , (addBootSuffix hisuf,  mkHiOnlyModLocation dflags hisuf)
@@ -355,6 +364,15 @@ searchPathExts
      ]
   -> IO FindResult
 
+#if defined(INTERACTIVE_EDITION) && defined(USE_FIXUPS)
+foreign import ccall "resources.h getLen" c_getLen::CString -> IO CInt
+
+getResourceSize :: FilePath -> IO Int
+getResourceSize fn = do
+       len <- (withCString fn $ \cfn -> c_getLen cfn)
+       return (fromIntegral len)
+#endif
+
 searchPathExts paths mod exts
    = do result <- search to_search
 {-
@@ -385,7 +403,12 @@ searchPathExts paths mod exts
                                  , fr_suggestions = [] })
 
     search ((file, mk_result) : rest) = do
+#if defined(INTERACTIVE_EDITION) && defined(USE_FIXUPS)
+      res_size <- getResourceSize file
+      let b = if (res_size == 0) then False else True
+#else
       b <- doesFileExist file
+#endif
       if b
         then do { loc <- mk_result; return (Found loc mod) }
         else search rest

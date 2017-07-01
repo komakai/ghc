@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP, MagicHash, UnboxedTuples #-}
+{-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE FlexibleInstances #-}
 
 {-# OPTIONS_GHC -O -funbox-strict-fields #-}
@@ -90,6 +91,12 @@ import ExtsCompat46
 import GHC.Word                 ( Word8(..) )
 
 import GHC.IO ( IO(..) )
+
+#if defined(INTERACTIVE_EDITION) && defined(USE_FIXUPS)
+import Foreign.C
+import Foreign.Ptr
+import Foreign.ForeignPtr
+#endif
 
 type BinArray = ForeignPtr Word8
 
@@ -207,6 +214,37 @@ readBinMem filename = do
   sz_r <- newFastMutInt
   writeFastMutInt sz_r filesize
   return (BinMem noUserData ix_r sz_r arr_r)
+
+readBinMemFromResource :: FilePath -> IO BinHandle
+
+#if defined(INTERACTIVE_EDITION) && defined(USE_FIXUPS)
+foreign import ccall "resources.h getLen" c_getLen::CString -> IO CInt
+foreign import ccall "resources.h getContent" c_getContent::CString -> IO (Ptr Word8)
+foreign import ccall "resources.h &finalizerNull" finalizerNull :: FinalizerPtr a
+
+getResourceSize :: FilePath -> IO Int
+getResourceSize fn = do
+       len <- (withCString fn $ \cfn -> c_getLen cfn)
+       return (fromIntegral len)
+
+getResourceAsForeignPtr :: FilePath -> IO (ForeignPtr Word8)
+getResourceAsForeignPtr fn = do
+       content <- (withCString fn $ \cfn -> c_getContent cfn)
+       contentfp <- newForeignPtr finalizerNull content
+       return contentfp
+
+readBinMemFromResource filename = do
+   size <- getResourceSize filename
+   arr <- getResourceAsForeignPtr filename
+   arr_r <- newIORef arr
+   ix_r <- newFastMutInt
+   writeFastMutInt ix_r 0
+   sz_r <- newFastMutInt
+   writeFastMutInt sz_r size
+   return (BinMem noUserData ix_r sz_r arr_r)
+#else
+readBinMemFromResource = readBinMem
+#endif
 
 fingerprintBinMem :: BinHandle -> IO Fingerprint
 fingerprintBinMem (BinMem _ ix_r _ arr_r) = do

@@ -59,6 +59,7 @@ ifeq "$(InteractiveEdition)" "YES"
 utils/ghc-pkg_dist-install_CONFIGURE_OPTS += --flags=interactive
 endif
 
+ifneq "$(UseFixups)" "YES"
 utils/ghc-pkg_dist-install_USES_CABAL = YES
 
 utils/ghc-pkg_dist-install_PROGNAME = ghc-pkg
@@ -75,6 +76,8 @@ ifeq "$(InteractiveEdition)" "YES"
 $(eval $(call build-prog,utils/ghc-pkg,dist-install,1,YES))
 else
 $(eval $(call build-prog,utils/ghc-pkg,dist-install,1))
+endif
+
 endif
 
 ifeq "$(Android)" "YES"

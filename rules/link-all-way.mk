@@ -11,7 +11,7 @@ else
 $2_DYNLINK_OPTS = -shared -Wl,-Bsymbolic -Wl,-h,$(notdir $$@)
 endif
 
-$$($2_LINKALL_LIB) : $$($2_ALL_OBJS)
+$$($2_LINKALL_LIB) : $$$$($2_ALL_OBJS)
 	mkdir -p $$(dir $$@);
 	"$$(ALL_LINKER)" \
          $$($2_DYNLINK_OPTS) \
@@ -22,7 +22,7 @@ $$($2_LINKALL_LIB) : $$($2_ALL_OBJS)
 else
 
 # Build the ordinary .a library
-$$($2_LINKALL_LIB) : $$($2_ALL_OBJS)
+$$($2_LINKALL_LIB) : $$$$($2_ALL_OBJS)
 	mkdir -p $$(dir $$@);
 	"$$(RM)" $$(RM_OPTS) $$@ $$@.contents
 	echo $$($2_ALL_OBJS) >> $$@.contents

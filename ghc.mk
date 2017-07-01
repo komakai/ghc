@@ -749,6 +749,7 @@ BUILD_DIRS += docs/users_guide
 BUILD_DIRS += docs/man
 BUILD_DIRS += utils/count_lines
 BUILD_DIRS += utils/compare_sizes
+BUILD_DIRS += fixups
 
 # ----------------------------------------------
 # Actually include all the sub-ghc.mk's

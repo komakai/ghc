@@ -104,6 +104,9 @@ _darcs/
 /driver/package.conf
 /driver/package.conf.inplace.old
 /settings.*
+/fixups/resources/
+/fixups/*.inc
+/fixups/*.dyn_inc
 /ghc.spec
 /ghc/ghc.cabal
 /ghc/ghc-bin.cxbxl
