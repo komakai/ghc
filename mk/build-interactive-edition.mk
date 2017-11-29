@@ -12,4 +12,4 @@ GhcWithInterpreter = YES
 HaveDtrace = NO
 HADDOCK_DOCS = NO
 UseAssembler = NO
-
+GhcWithSMP = NO

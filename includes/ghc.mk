@@ -146,40 +146,40 @@ $$(includes_H_PLATFORM_STAGE$1) : includes/Makefile | $$(dir $$@)/.
 	echo "#ifndef __GHCPLATFORM_H__"  >$$@
 	echo "#define __GHCPLATFORM_H__" >>$$@
 	echo >> $$@
-	echo "#define BuildPlatform_TYPE  $(HostPlatform_CPP)" >> $$@
-	echo "#define HostPlatform_TYPE   $(TargetPlatform_CPP)" >> $$@
+	echo "#define BuildPlatform_TYPE  $(HostPlatform_CPP_STAGE$1)" >> $$@
+	echo "#define HostPlatform_TYPE   $(TargetPlatform_CPP_STAGE$1)" >> $$@
 	echo >> $$@
-	echo "#define $(HostPlatform_CPP)_BUILD  1" >> $$@
-	echo "#define $(TargetPlatform_CPP)_HOST  1" >> $$@
+	echo "#define $(HostPlatform_CPP_STAGE$1)_BUILD  1" >> $$@
+	echo "#define $(TargetPlatform_CPP_STAGE$1)_HOST  1" >> $$@
 	echo >> $$@
-	echo "#define $(HostArch_CPP)_BUILD_ARCH  1" >> $$@
-	echo "#define $(TargetArch_CPP)_HOST_ARCH  1" >> $$@
-	echo "#define BUILD_ARCH  \"$(HostArch_CPP)\"" >> $$@
-	echo "#define HOST_ARCH  \"$(TargetArch_CPP)\"" >> $$@
+	echo "#define $(HostArch_CPP_STAGE$1)_BUILD_ARCH  1" >> $$@
+	echo "#define $(TargetArch_CPP_STAGE$1)_HOST_ARCH  1" >> $$@
+	echo "#define BUILD_ARCH  \"$(HostArch_CPP_STAGE$1)\"" >> $$@
+	echo "#define HOST_ARCH  \"$(TargetArch_CPP_STAGE$1)\"" >> $$@
 	echo >> $$@
-	echo "#define $(HostOS_CPP)_BUILD_OS  1" >> $$@
-	echo "#define $(TargetOS_CPP)_HOST_OS  1" >> $$@
-	echo "#define BUILD_OS  \"$(HostOS_CPP)\"" >> $$@
-	echo "#define HOST_OS  \"$(TargetOS_CPP)\"" >> $$@
+	echo "#define $(HostOS_CPP_STAGE$1)_BUILD_OS  1" >> $$@
+	echo "#define $(TargetOS_CPP_STAGE$1)_HOST_OS  1" >> $$@
+	echo "#define BUILD_OS  \"$(HostOS_CPP_STAGE$1)\"" >> $$@
+	echo "#define HOST_OS  \"$(TargetOS_CPP_STAGE$1)\"" >> $$@
 ifeq "$(HostOS_CPP)" "irix"
-	echo "#ifndef $(IRIX_MAJOR)_HOST_OS" >> $$@  
-	echo "#define $(IRIX_MAJOR)_HOST_OS  1" >> $$@  
+	echo "#ifndef $(IRIX_MAJOR_STAGE$1)_HOST_OS" >> $$@
+	echo "#define $(IRIX_MAJOR_STAGE$1)_HOST_OS  1" >> $$@
 	echo "#endif" >> $$@  
 endif
 	echo >> $$@
-	echo "#define $(HostVendor_CPP)_BUILD_VENDOR  1" >> $$@
-	echo "#define $(TargetVendor_CPP)_HOST_VENDOR  1" >> $$@
-	echo "#define BUILD_VENDOR  \"$(HostVendor_CPP)\"" >> $$@
-	echo "#define HOST_VENDOR  \"$(TargetVendor_CPP)\"" >> $$@
+	echo "#define $(HostVendor_CPP_STAGE$1)_BUILD_VENDOR  1" >> $$@
+	echo "#define $(TargetVendor_CPP_STAGE$1)_HOST_VENDOR  1" >> $$@
+	echo "#define BUILD_VENDOR  \"$(HostVendor_CPP_STAGE$1)\"" >> $$@
+	echo "#define HOST_VENDOR  \"$(TargetVendor_CPP_STAGE$1)\"" >> $$@
 	echo >> $$@
 	echo "/* These TARGET macros are for backwards compatibility... DO NOT USE! */" >> $$@
-	echo "#define TargetPlatform_TYPE $(TargetPlatform_CPP)" >> $$@
-	echo "#define $(TargetPlatform_CPP)_TARGET  1" >> $$@
-	echo "#define $(TargetArch_CPP)_TARGET_ARCH  1" >> $$@
-	echo "#define TARGET_ARCH  \"$(TargetArch_CPP)\"" >> $$@
-	echo "#define $(TargetOS_CPP)_TARGET_OS  1" >> $$@  
-	echo "#define TARGET_OS  \"$(TargetOS_CPP)\"" >> $$@
-	echo "#define $(TargetVendor_CPP)_TARGET_VENDOR  1" >> $$@
+	echo "#define TargetPlatform_TYPE $(TargetPlatform_CPP_STAGE$1)" >> $$@
+	echo "#define $(TargetPlatform_CPP_STAGE$1)_TARGET  1" >> $$@
+	echo "#define $(TargetArch_CPP_STAGE$1)_TARGET_ARCH  1" >> $$@
+	echo "#define TARGET_ARCH  \"$(TargetArch_CPP_STAGE$1)\"" >> $$@
+	echo "#define $(TargetOS_CPP_STAGE$1)_TARGET_OS  1" >> $$@
+	echo "#define TARGET_OS  \"$(TargetOS_CPP_STAGE$1)\"" >> $$@
+	echo "#define $(TargetVendor_CPP_STAGE$1)_TARGET_VENDOR  1" >> $$@
 ifeq "$(GhcUnregisterised)" "YES"
 	echo "#define UnregisterisedCompiler 1" >> $$@
 endif

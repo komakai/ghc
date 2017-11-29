@@ -26,6 +26,7 @@
 TOP		= @hardtop@
 
 include $(TOP)/mk/stage/project.mk
+include $(TOP)/mk/platform-stage.mk
 
 # By default, be verbose
 V = 1

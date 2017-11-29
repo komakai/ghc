@@ -60,7 +60,7 @@ $1_$2_CONFIGURE_OPTS += --configure-option=LDFLAGS="$$($1_$2_CONFIGURE_LDFLAGS)"
 $1_$2_CONFIGURE_OPTS += --configure-option=CPPFLAGS="$$($1_$2_CONFIGURE_CPPFLAGS)"
 
 ifeq "$(IosDev)" "YES"
-$1_$2_CONFIGURE_OPTS += --skip-final-check
+$1_$2_CONFIGURE_OPTS += --disable-final-checks
 endif
 
 # Also pass these as gcc-options, because Cabal uses them to check for

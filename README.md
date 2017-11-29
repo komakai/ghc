@@ -115,6 +115,8 @@ Create .gitconfig and add the following rules:
 	insteadOf = https://github.com/komakai/packages/process.git
 [url "https://github.com/komakai/packages-binary.git"]
 	insteadOf = https://github.com/komakai/packages/binary.git
+[url "https://github.com/komakai/packages-Cabal.git"]
+	insteadOf = https://github.com/komakai/packages/Cabal.git
 ```
 
 Clone the git repository together with submodules:  

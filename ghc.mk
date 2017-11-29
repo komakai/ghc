@@ -156,13 +156,13 @@ target_stage=1
 endif
 endif
 
+include mk/stage1/stage-config.mk
+include mk/stage2/stage-config.mk
 ifeq "$(target_stage)" "1"
 include mk/stage1/config.mk
 else
 include mk/stage2/config.mk
 endif
-include mk/stage1/stage-config.mk
-include mk/stage2/stage-config.mk
 
 ifeq "$(filter -DINTERACTIVE_EDITION,$(CONF_CC_OPTS_STAGE2))" "-DINTERACTIVE_EDITION"
 InteractiveEdition=YES

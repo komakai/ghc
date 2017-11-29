@@ -48,3 +48,85 @@ ArSupportsAtFile_STAGE@STAGE@ = @ArSupportsAtFile@
 # AC_PROG_CPP defines CPP as "/usr/bin/gcc -E"
 CPP_STAGE@STAGE@ = @CPP@ @CPPFLAGS@
 
+################################################################################
+#
+#		Platform variables
+#
+################################################################################
+
+# A "platform" is the GNU cpu-type/manufacturer/operating-system target machine
+# specifier.  E.g. sparc-sun-solaris2
+#
+# Build  platform: the platform on which we are doing this build
+# Host   platform: the platform on which these binaries will run
+# Target platform: the platform for which this compiler will generate code
+#
+# We don't support build & host being different, because the build
+# process creates binaries that are run during the build, and also
+# installed.
+#
+# If host & target are different, then we are building a compiler
+# which will generate intermediate .hc files to port to the target
+# architecture for bootstrapping.  The libraries and stage 2 compiler
+# will be built as HC files for the target system, and likely won't
+# build on this host platform.
+#
+# An important invariant is that for any piece of source code, the
+# platform on which the code is going to run is the HOST platform,
+# and the platform on which we are building is the BUILD platform.
+# Additionally for the compiler, the platform this compiler will
+# generate code for is the TARGET.  TARGET is not meaningful outside
+# the compiler sources.
+#
+# Guidelines for when to use HOST vs. TARGET:
+#
+#  - In the build system (Makefile, foo.mk), normally we should test
+#    $(HOSTPLATFORM).  There are some cases (eg. installation), where
+#    we expect $(HOSTPLATFORM)==$(TARGETPLATFORM), so in those cases it
+#    doesn't matter which is used.
+#
+#  - In the compiler itself, we should test HOST or TARGET depending
+#    on whether the conditional relates to the code being generated, or
+#    the platform on which the compiler is running.  See the section
+#    on "Coding Style" in the commentary for more details.
+#
+#  - In all other code, we should be testing HOST only.
+#
+# NOTE: cross-compiling is not well supported by the build system.
+# You have to do a lot of work by hand to cross compile: see the
+# section on "Porting GHC" in the Building Guide.
+
+HOSTPLATFORM_STAGE@STAGE@			= @HostPlatform@
+TARGETPLATFORM_STAGE@STAGE@			= @TargetPlatform@
+BUILDPLATFORM_STAGE@STAGE@			= @BuildPlatform@
+
+HostPlatform_CPP_STAGE@STAGE@		= @HostPlatform_CPP@
+HostArch_CPP_STAGE@STAGE@			= @HostArch_CPP@
+HostOS_CPP_STAGE@STAGE@				= @HostOS_CPP@
+HostVendor_CPP_STAGE@STAGE@			= @HostVendor_CPP@
+
+TargetPlatform_CPP_STAGE@STAGE@		= @TargetPlatform_CPP@
+TargetArch_CPP_STAGE@STAGE@			= @TargetArch_CPP@
+TargetOS_CPP_STAGE@STAGE@			= @TargetOS_CPP@
+TargetVendor_CPP_STAGE@STAGE@		= @TargetVendor_CPP@
+
+BuildPlatform_CPP_STAGE@STAGE@		= @BuildPlatform_CPP@
+BuildArch_CPP_STAGE@STAGE@			= @BuildArch_CPP@
+BuildOS_CPP_STAGE@STAGE@			= @BuildOS_CPP@
+BuildVendor_CPP_STAGE@STAGE@		= @BuildVendor_CPP@
+
+@HostPlatform_CPP@_HOST_STAGE@STAGE@           = 1
+@TargetPlatform_CPP@_TARGET_STAGE@STAGE@       = 1
+@BuildPlatform_CPP@_BUILD_STAGE@STAGE@         = 1
+
+@HostArch_CPP@_HOST_ARCH_STAGE@STAGE@          = 1
+@TargetArch_CPP@_TARGET_ARCH_STAGE@STAGE@      = 1
+@BuildArch_CPP@_BUILD_ARCH_STAGE@STAGE@        = 1
+
+@HostOS_CPP@_HOST_OS_STAGE@STAGE@              = 1
+@TargetOS_CPP@_TARGET_OS_STAGE@STAGE@          = 1
+@BuildOS_CPP@_BUILD_OS_STAGE@STAGE@            = 1
+
+@HostVendor_CPP@_HOST_VENDOR_STAGE@STAGE@      = 1
+@TargetVendor_CPP@_TARGET_VENDOR_STAGE@STAGE@  = 1
+@BuildVendor_CPP@_BUILD_VENDOR_STAGE@STAGE@    = 1
