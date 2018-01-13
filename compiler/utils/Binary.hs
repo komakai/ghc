@@ -33,6 +33,7 @@ module Binary
 
    writeBinMem,
    readBinMem,
+   readBinMemFromResource,
 
    fingerprintBinMem,
    computeFingerprint,

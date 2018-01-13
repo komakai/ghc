@@ -6,15 +6,17 @@
 #include "nativeint.h"
 #include "native.h"
 
-extern StgClosure ghczmlibzm7zi8zi3_Main_main_closure;
+#ifndef MAKING_GHC_BUILD_SYSTEM_DEPENDENCIES
+#include "main_closure.h"
+#endif
 
 extern void initBuffers();
 extern void deinitBuffers();
 
 extern int hs_main(int argc, char* argv[], StgClosure* main_closure, RtsConfig rts_config);
 
-extern int __bss_start;
-extern int _end;
+extern void* __bss_start;
+extern void* _end;
 
 FILE *redirectPipe[2]={NULL,NULL};
 
@@ -31,7 +33,7 @@ void runHaskell()
 	native_log(INFO, "In runHaskell");
 	initBuffers();
 	native_log(INFO, "Calling hs_main");
-	hs_main(argc, argv, &ghczmlibzm7zi8zi3_Main_main_closure, rtsConfig);
+	hs_main(argc, argv, main_closure, rtsConfig);
 	deinitBuffers();
 	native_log(INFO, "Returned from hs_main");
 	free(strExe);
@@ -48,7 +50,7 @@ void runHaskell()
 	}
 #ifdef __PIC__
 	void* bssBackup = native_backup_bss();
-	memset((void*)__bss_start, 0 , _end-__bss_start);
+	memset(__bss_start, 0 , (size_t)_end-(size_t)__bss_start);
 	native_restore_bss(bssBackup);
 #endif
 	native_log(INFO, "Returning from runHaskell");

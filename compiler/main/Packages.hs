@@ -363,7 +363,11 @@ resolvePackageConfig _ (PkgConfFile name) = return $ Just name
 
 readPackageConfig :: DynFlags -> FilePath -> IO [PackageConfig]
 readPackageConfig dflags conf_file = do
+#if defined(INTERACTIVE_EDITION) && defined(USE_FIXUPS)
+  let isdir = True
+#else
   isdir <- doesDirectoryExist conf_file
+#endif
 
   proto_pkg_configs <-
     if isdir

@@ -9,6 +9,7 @@ my $initres;
 my $i=0;
 my $way_suffix = "";
 my $cpcreatecmd;
+my $nobackup_directive;
 
 if ( $ARGV[0] eq "dyn" ) {
 	$way_suffix = "dyn_";
@@ -16,13 +17,16 @@ if ( $ARGV[0] eq "dyn" ) {
 
 if ($^O eq "linux") {
 	$cpcreatecmd = "install -D";
+	$nobackup_directive = "";
 } elsif ($^O eq "darwin") {
 	$cpcreatecmd = "ditto";
+	$nobackup_directive = "''";
 }
 
 system("mkdir -p fixups/resources/package.conf.d");
 system("cp inplace/lib/package.conf.d/package.cache fixups/resources/package.conf.d");
 system("cp fixups/builtin_rts.conf fixups/resources/package.conf.d");
+system("cp inplace/lib/platformConstants.stage2 fixups/resources");
 
 @packages = `cat fixups/packages`;
 foreach $package(@packages){
@@ -35,7 +39,7 @@ foreach $package(@packages){
 	system("cp $fullpackage fixups/resources/package.conf.d");
 	$fullpackage = `find fixups/resources/package.conf.d -type f -name "${package}*.conf"`;
 	chomp($fullpackage);
-	system("sed -i -e 's/import-dirs: .*/import-dirs: ${package}/;s/library-dirs: .*/library-dirs: ${package}/;s/include-dirs: .*/include-dirs:/;s/haddock-interfaces: .*/haddock-interfaces:/' ${fullpackage}" );
+	system("sed -i ${nobackup_directive} -e 's/import-dirs: .*/import-dirs: ${package}/;s/library-dirs: .*/library-dirs: ${package}/;s/include-dirs: .*/include-dirs:/;s/haddock-interfaces: .*/haddock-interfaces:/' ${fullpackage}" );
 	system("find libraries/${package}/dist-install/build -name \"*.${way_suffix}hi\" -exec ${cpcreatecmd} {} fixups/tmp/{} \\;");
 	system("rm -r fixups/resources/${package}");
 	system("mv fixups/tmp/libraries/${package}/dist-install/build fixups/resources/${package}");

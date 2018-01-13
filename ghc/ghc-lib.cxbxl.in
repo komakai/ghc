@@ -28,8 +28,18 @@ Flag interactiveghci
     Default: False
     Manual: True
 
+Flag nativeinput
+    Description: Build native input support.
+    Default: False
+    Manual: True
+
 Flag androidnativeinput
-    Description: Build Android native input.
+    Description: Build Android native input support.
+    Default: False
+    Manual: True
+
+Flag iosnativeinput
+    Description: Build IOS native input support.
     Default: False
     Manual: True
 
@@ -84,10 +94,18 @@ library
             TupleSections
             UnboxedTuples
 
+
+    if flag(nativeinput)
+        C-Sources: nativeint/nativeint.c
+        Include-Dirs: nativeint
+
     if flag(androidnativeinput)
         C-Sources: nativeint/android/haskell-android-int.c
-                   nativeint/nativeint.c
-        Include-Dirs: nativeint, nativeint/android
+        Include-Dirs: nativeint/android
+
+    if flag(iosnativeinput)
+        C-Sources: nativeint/ios/haskell-ios-int.c
+        Include-Dirs: nativeint/ios
 
     Other-Extensions:
         CPP

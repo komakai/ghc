@@ -181,8 +181,10 @@ ifeq "$(filter -DANDROID,$(CONF_CC_OPTS_STAGE2))" "-DANDROID"
 Android = YES
 else ifeq "$(filter -DIOS_SIM,$(CONF_CC_OPTS_STAGE2))" "-DIOS_SIM"
 IosSim = YES
+Ios = YES
 else ifeq "$(filter -DIOS_DEVICE,$(CONF_CC_OPTS_STAGE2))" "-DIOS_DEVICE"
 IosDev = YES
+Ios = YES
 endif
 ifeq "$(filter -DUSE_FIXUPS,$(CONF_CC_OPTS_STAGE2))" "-DUSE_FIXUPS"
 ifeq "$(target_stage)" "2"
@@ -1301,6 +1303,11 @@ CLEAN_FILES += libraries/base/include/EventConfig.h
 CLEAN_FILES += mk/config.mk.old
 CLEAN_FILES += mk/project.mk.old
 CLEAN_FILES += compiler/ghc.cabal.old
+CLEAN_FILES += ghc/nativeint/main_closure.h
+CLEAN_FILES += fixups/resfiles.dyn_inc
+CLEAN_FILES += fixups/resfiles.inc
+CLEAN_FILES += fixups/symboltable.dyn_inc
+CLEAN_FILES += fixups/symboltable.inc
 
 # These are no longer generated, but we still clean them for a while
 # as they may still be in old GHC trees:
@@ -1320,6 +1327,8 @@ clean_files :
 	$(call removeTrees,inplace/bin)
 	$(call removeTrees,inplace/lib)
 	$(call removeTrees,libraries/bootstrapping.conf)
+	$(call removeTrees,fixups/resources)
+	$(call removeTrees,fixups/tmp)
 	$(call removeTrees,ghc/linkall)
 
 .PHONY: clean_libraries

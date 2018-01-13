@@ -245,6 +245,11 @@ import Text.Read
 import GHC.Show
 import GHC.MVar
 
+#if defined(INTERACTIVE_EDITION) && defined(USE_FIXUPS)
+import Foreign.C.String
+import GHC.Real
+#endif
+
 -- -----------------------------------------------------------------------------
 -- Standard IO
 
@@ -312,7 +317,18 @@ interact f      =   do s <- getContents
 -- The file is read lazily, on demand, as with 'getContents'.
 
 readFile        :: FilePath -> IO String
+
+#if defined(INTERACTIVE_EDITION) && defined(USE_FIXUPS)
+-- This will only work for text files
+foreign import ccall "resources.h getLen" c_getLen::CString -> IO CInt
+foreign import ccall "resources.h getContent" c_getContent::CString -> IO CString
+readFile name = do
+       len <- (withCString name $ \cfn -> c_getLen cfn)
+       content <- (withCString name $ \cname -> c_getContent cname)
+       peekCStringLen (content, fromIntegral len)
+#else
 readFile name   =  openFile name ReadMode >>= hGetContents
+#endif
 
 -- | The computation 'writeFile' @file str@ function writes the string @str@,
 -- to the file @file@.

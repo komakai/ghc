@@ -5,7 +5,7 @@ fixups_dist_CC = $(CC_STAGE2)
 RESOURCES_FIXUP_SRC = fixups/resources.c
 SYMTABLE_FIXUP_SRC = fixups/symbolLookup.c
 
-ifeq "$(IosSim)$(IosDev)" "YES"
+ifeq "$(Ios)" "YES"
 fixups_LEADING_UNDERSCORE = yes
 endif
 
@@ -20,7 +20,7 @@ $1_fixups_INCSUFFIX = .dyn_inc
 fixups_dist_$1_CC_OPTS = -fPIC -DDYNAMIC -Iincludes $$(CONF_CC_OPTS_STAGE2)
 ifeq "$(Android)" "YES"
 $1_fixups_LIBSUFFIX = so
-else ifeq "$(IosSim)$(IosDev)" "YES"
+else ifeq "$(Ios)" "YES"
 $1_fixups_LIBSUFFIX = dylib
 endif
 endif
@@ -32,7 +32,7 @@ $$($1_fixups_RESFILES) : $$(ghc_stage2_$1_LIB)
 	fixups/genres.pl $1
 
 $$($1_fixups_SYMBOLFILE) : $$(ghc_stage2_$1_LIB)
-	fixups/gensymtable.pl $$($1_fixups_LIBSUFFIX) $$($1_fixups_LEADING_UNDERSCORE)
+	fixups/gensymtable.pl $$($1_fixups_LIBSUFFIX) $$(fixups_LEADING_UNDERSCORE)
 
 $(call distdir-way-opts,fixups,dist,$1)
 $(call c-suffix-rules,fixups,dist,$1,NO)

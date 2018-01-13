@@ -37,9 +37,17 @@ ghc_stage3_CONFIGURE_OPTS += --flags=ghci
 endif
 endif
 
-ifeq "$(Android)$(NativeInput)" "YESYES"
+ifeq "$(NativeInput)" "YES"
+ghc_stage2_CONFIGURE_OPTS += --flags=nativeinput
+ghc_stage3_CONFIGURE_OPTS += --flags=nativeinput
+ifeq "$(Android)" "YES"
 ghc_stage2_CONFIGURE_OPTS += --flags=androidnativeinput
 ghc_stage3_CONFIGURE_OPTS += --flags=androidnativeinput
+endif
+ifeq "$(Ios)" "YES"
+ghc_stage2_CONFIGURE_OPTS += --flags=iosnativeinput
+ghc_stage3_CONFIGURE_OPTS += --flags=iosnativeinput
+endif
 endif
 
 ifeq "$(compiler_stage1_VERSION_MUNGED)" "YES"
@@ -182,6 +190,12 @@ $(INPLACE_LIB)/platformConstants.stage1: $(includes_GHCCONSTANTS_HASKELL_VALUE_S
 
 $(INPLACE_LIB)/platformConstants.stage2: $(includes_GHCCONSTANTS_HASKELL_VALUE_STAGE2)
 	"$(CP)" $< $@
+
+ghc/stage2/build/nativeint/nativeint.o : ghc/nativeint/main_closure.h
+ghc/stage2/build/nativeint/nativeint.dyn_o : ghc/nativeint/main_closure.h
+
+ghc/nativeint/main_closure.h : ghc/Main.hc
+	ghc/gen_main_closure_header.pl
 
 # The GHC programs need to depend on all the helper programs they might call,
 # and the settings files they use

@@ -15,7 +15,7 @@ my $way_suffix = "";
 my $libsuffix = $ARGV[0];
 
 if ($libsuffix eq "dylib" || $libsuffix eq "so") {
-	$nmoptions = "-D";
+	$nmoptions = ($libsuffix eq "dylib") ? "-gU" : "-D";
 	$way_suffix = "dyn_";
 } else {
 	$nmoptions = "-a";

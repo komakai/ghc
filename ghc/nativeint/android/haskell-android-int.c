@@ -48,16 +48,18 @@ int convert_priority(int priority)
 	return converted_priority;
 }
 
-void native_log(int priority, char* msg)
+void native_log_internal(int priority, const char* msg)
 {
 	int android_priority = convert_priority(priority);
 	__android_log_write(android_priority, "Haskell", msg);
 }
 
+log_fn native_log = native_log_internal;
+
 extern char* getAndClearStdOut();
 extern char* getAndClearStdErr();
 
-char* native_get_input(char* strStatus)
+char* native_get_input_internal(char* strStatus)
 {
 	char* strRet=NULL;
 
@@ -88,16 +90,18 @@ char* native_get_input(char* strStatus)
 	return strRet;
 }
 
+get_input_fn native_get_input = native_get_input_internal;
+
 void* native_backup_bss()
 {
 	void *pBack = malloc( sizeof(g_vm) );
-	*(JavaVM*)pBack = g_vm;
+	*(JavaVM**)pBack = g_vm;
 	return pBack;
 }
 
 void native_restore_bss(void* pBack)
 {
-	g_vm = *(JavaVM*)pBack;
+	g_vm = *(JavaVM**)pBack;
 	free(pBack);
 }
 

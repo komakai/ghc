@@ -6,9 +6,12 @@ $2_LINKALL_LIB = $1/lib$$(linkall_LIBNAME)$$($2_libsuf)
 ifeq "$2" "dyn"
 
 ifeq "$$(darwin_HOST_OS_STAGE2)$$(ios_HOST_OS_STAGE2)" "1"
-$2_DYNLINK_OPTS = -dynamiclib -undefined dynamic_lookup -single_module -Wl,-read_only_relocs,suppress
+$2_DYNLINK_OPTS = -dynamiclib -undefined dynamic_lookup -single_module -Wl,-undefined,error -Wl,-read_only_relocs,suppress
+ifeq "$$(ios_HOST_OS_STAGE2)" "1"
+$2_DYNLINK_OPTS += -install_name @executable_path/Frameworks/lib$$(linkall_LIBNAME)$$($2_libsuf)
+endif
 else
-$2_DYNLINK_OPTS = -shared -Wl,-Bsymbolic -Wl,-h,$(notdir $$@)
+$2_DYNLINK_OPTS = -shared -Wl,-Bsymbolic -Wl,--no-undefined -Wl,-h,$(notdir $$@)
 endif
 
 $$($2_LINKALL_LIB) : $$$$($2_ALL_OBJS)
@@ -16,7 +19,7 @@ $$($2_LINKALL_LIB) : $$$$($2_ALL_OBJS)
 	"$$(ALL_LINKER)" \
          $$($2_DYNLINK_OPTS) \
          $$($2_ALL_OBJS) \
-         $$(ALL_LINKER_OPTS) $$(ALL_EXTRA_LINKER_OPTS) \
+         $$(ALL_LINKER_OPTS) $$(ALL_EXTRA_LINKER_OPTS) $$(addprefix -l,$$(ghc_stage2_DEP_EXTRA_LIBS)) \
          -o $$@
 
 else

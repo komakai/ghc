@@ -61,6 +61,13 @@ import System.IO
 import System.IO.Error
 import GHC.IO.Exception (IOErrorType(InappropriateType))
 import System.Directory
+#if defined(INTERACTIVE_EDITION) && defined(USE_FIXUPS)
+import Foreign.C
+import Foreign.Ptr
+import Foreign.ForeignPtr
+import Data.ByteString.Internal (fromForeignPtr)
+import Data.ByteString.Lazy (ByteString, fromChunks)
+#endif
 
 
 -- | This is a subset of Cabal's 'InstalledPackageInfo', with just the bits
@@ -177,7 +184,11 @@ readPackageDbForGhc :: (BinaryStringRep a, BinaryStringRep b, BinaryStringRep c,
                         BinaryStringRep d, BinaryStringRep e) =>
                        FilePath -> IO [InstalledPackageInfo a b c d e]
 readPackageDbForGhc file =
+#if defined(INTERACTIVE_EDITION) && defined(USE_FIXUPS)
+    decodeFromResource file getDbForGhc
+#else
     decodeFromFile file getDbForGhc
+#endif
   where
     getDbForGhc = do
       _version    <- getHeader
@@ -194,7 +205,11 @@ readPackageDbForGhc file =
 --
 readPackageDbForGhcPkg :: Binary pkgs => FilePath -> IO pkgs
 readPackageDbForGhcPkg file =
+#if defined(INTERACTIVE_EDITION) && defined(USE_FIXUPS)
+    decodeFromResource file getDbForGhcPkg
+#else
     decodeFromFile file getDbForGhcPkg
+#endif
   where
     getDbForGhcPkg = do
       _version    <- getHeader
@@ -262,6 +277,27 @@ headerMagic :: BS.ByteString
 headerMagic = BS.Char8.pack "\0ghcpkg\0"
 
 
+#if defined(INTERACTIVE_EDITION) && defined(USE_FIXUPS)
+foreign import ccall "resources.h getLen" c_getLen::CString -> IO CInt
+foreign import ccall "resources.h getContent" c_getContent::CString -> IO (Ptr Word8)
+foreign import ccall "resources.h &finalizerNull" finalizerNull :: FinalizerPtr a
+
+getResourceAsByteString :: FilePath -> IO ByteString
+getResourceAsByteString fn = do
+       len <- (withCString fn $ \cfn -> c_getLen cfn)
+       content <- (withCString fn $ \cfn -> c_getContent cfn)
+       contentfp <- newForeignPtr finalizerNull content
+       let sbs = fromForeignPtr contentfp 0 (fromIntegral len)
+       let lbs = fromChunks [sbs]
+       return lbs
+
+decodeFromResource :: FilePath -> Get a -> IO a
+decodeFromResource file decoder =  do
+    s <- getResourceAsByteString file
+    return $ runGet decoder s
+
+#else
+
 -- TODO: we may be able to replace the following with utils from the binary
 -- package in future.
 
@@ -282,6 +318,7 @@ decodeFromFile file decoder =
         err = mkIOError InappropriateType loc Nothing (Just file)
               `ioeSetErrorString` msg
         loc = "GHC.PackageDb.readPackageDb"
+#endif
 
 writeFileAtomic :: FilePath -> BS.Lazy.ByteString -> IO ()
 writeFileAtomic targetPath content = do

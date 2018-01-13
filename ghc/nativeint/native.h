@@ -5,9 +5,11 @@
 #define ERROR 3
 #define FATAL 4
 
-void native_log(int priority, char* msg);
+typedef void (*log_fn)(int, const char*);
+typedef const char* (*get_input_fn)(const char*);
 
-char* native_get_input(char* strStatus);
+extern log_fn native_log;
+extern get_input_fn native_get_input;
 
 void* native_backup_bss();
 

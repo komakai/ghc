@@ -95,7 +95,11 @@ readBinIface_ dflags checkHiWay traceBinIFaceReading hi_path ncu = do
             when (wanted /= got) $ throwGhcExceptionIO $ ProgramError
                          (what ++ " (wanted " ++ show wanted
                                ++ ", got "    ++ show got ++ ")")
+#if defined(INTERACTIVE_EDITION) && defined(USE_FIXUPS)
+    bh <- Binary.readBinMemFromResource hi_path
+#else
     bh <- Binary.readBinMem hi_path
+#endif
 
     -- Read the magic number to check that this really is a GHC .hi file
     -- (This magic number does not change when we change
