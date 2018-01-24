@@ -1,7 +1,11 @@
 
 #include <unistd.h>
 #include <stdio.h>
-#include<pthread.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+
+#include "HsBase.h"
 
 #ifdef INTERACTIVE_EDITION
 
@@ -64,7 +68,7 @@ static int isControlChar(unsigned char c)
 #define LO_NIBBLE(x) (x)%16
 #define TO_HEX(x) ((x)<=9?('0'+(x)):('A'+(x)-10))
 
-static char* getBufferLenAndCopy(ioBuffer* buf, char* outBuffer, int* size)
+static void getBufferLenAndCopy(ioBuffer* buf, char* outBuffer, int* size)
 {
 	int i,j=0;
 	for (i=0;i<buf->length;i++) {

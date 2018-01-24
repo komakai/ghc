@@ -1,3 +1,4 @@
+#include <string.h>
 #include "Rts.h"
 
 typedef unsigned int MD5_u32plus;

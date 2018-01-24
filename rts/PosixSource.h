@@ -16,7 +16,7 @@
 #define _XOPEN_SOURCE   600
 #else
 #define _POSIX_SOURCE   1
-#define _POSIX_C_SOURCE 199506L
+#define _POSIX_C_SOURCE 200112L
 #define _XOPEN_SOURCE   500
 // FreeBSD takes a different approach to _ISOC99_SOURCE: on FreeBSD it
 // means "I want *just* C99 things", whereas on GNU libc and Solaris

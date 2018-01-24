@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 #include "Rts.h"
 #include "nativeint.h"
 #include "native.h"

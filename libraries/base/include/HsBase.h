@@ -155,6 +155,9 @@ extern HsWord64 getMonotonicUSec(void);
 /* in inputReady.c */
 extern int fdReady(int fd, int write, int msecs, int isSock);
 
+/* in haskell-write */
+extern ssize_t hs_write(int fd, const void *buf, size_t count);
+
 /* -----------------------------------------------------------------------------
    INLINE functions.
 
