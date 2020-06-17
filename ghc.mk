@@ -1304,6 +1304,7 @@ CLEAN_FILES += mk/config.mk.old
 CLEAN_FILES += mk/project.mk.old
 CLEAN_FILES += compiler/ghc.cabal.old
 CLEAN_FILES += ghc/nativeint/main_closure.h
+CLEAN_FILES += ghc/nativeint/bss_limits.h
 CLEAN_FILES += fixups/resfiles.dyn_inc
 CLEAN_FILES += fixups/resfiles.inc
 CLEAN_FILES += fixups/symboltable.dyn_inc

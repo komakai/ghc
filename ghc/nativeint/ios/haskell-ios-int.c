@@ -2,9 +2,16 @@
 #include <stdio.h>
 #include "../native.h"
 
+#if defined(HAVE_BSS_LIMITS)
+#include "../bss_limits.h"
+
+void* __bss_start = (void*) BSS_START;
+void* _end = (void*) BSS_END;
+#else
 // dummy values
 void* __bss_start = (void*)0x10000000;
 void* _end = (void*)0x10000000;
+#endif
 
 get_input_fn native_get_input = NULL;
 
